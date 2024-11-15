@@ -1,0 +1,16 @@
+langchain-core~=0.3.15
+pydantic~=2.9.2
+rich~=13.9.4
+aiofiles~=24.1.0
+openai~=1.54.3
+tiktoken~=0.8.0
+langchain-community~=0.3.5
+langchain-text-splitters~=0.3.2
+langchain-anthropic~=0.2.4
+langchain-openai~=0.2.6
+PyYAML~=6.0.2
+langgraph~=0.2.46
+RapidFuzz~=3.10.1
+typing_extensions~=4.12.2
+langchain~=0.3.7
+anthropic~=0.39.0

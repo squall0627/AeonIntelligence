@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+langchain-core = "*"
+langchain-openai = "*"
+langchain-community = "*"
+rich = "*"
+aiofiles = "*"
+langchain-ollama = "*"
+transformers = "*"
+langchain-anthropic = "*"
+langgraph = "*"
+rapidfuzz = "*"
+faiss-cpu = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"
+python_full_version = "3.12.7"
