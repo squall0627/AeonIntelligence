@@ -201,7 +201,7 @@ class AiQARAG:
                 # TODO Check if it is OK
                 rolling_message, diff_answer, answer_str = parse_chunk_response(
                     rolling_message,
-                    chunk,
+                    chunk["answer"],
                     self.llm_endpoint.supports_func_calling(),
                     prev_answer,
                 )

@@ -454,13 +454,17 @@ class KnowledgeWarehouse:
         list_files = [] if list_files is None else list_files
 
         full_answer = ""
-        async for response in rag_instance.answer_astream(
-                question=question, history=chat_history, list_files=list_files
-        ):
-            # Format output
-            if not response.last_chunk:
-                yield response
-            full_answer += response.answer
+        if rag_pipeline == AiQARAG:
+            response = rag_instance.answer(question=question, history=chat_history, list_files=list_files)
+            full_answer = response.answer
+        elif rag_pipeline == AiQARAGLangGraph:
+            async for response in rag_instance.answer_astream(
+                    question=question, history=chat_history, list_files=list_files
+            ):
+                # Format output
+                if not response.last_chunk:
+                    yield response
+                full_answer += response.answer
 
         chat_history.append(HumanMessage(content=question))
         chat_history.append(AIMessage(content=full_answer))

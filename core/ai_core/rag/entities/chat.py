@@ -1,10 +1,11 @@
-from typing import Any, List, Generator, Tuple
+from typing import Any, List, Generator, Tuple, Union
 from dataclasses import dataclass
 from uuid import UUID, uuid4
+
 from pydantic import BaseModel, Field
 from datetime import datetime
 
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage, BaseMessage
 from rich.tree import Tree
 
 class CitedAnswer(BaseModel):
@@ -27,7 +28,7 @@ class ChatMessage(BaseModel):
     chat_id: UUID
     message_id: UUID
     kw_id: UUID | None
-    msg: AIMessage | HumanMessage
+    msg: BaseMessage
     message_time: datetime
     metadata: dict[str, Any]
 

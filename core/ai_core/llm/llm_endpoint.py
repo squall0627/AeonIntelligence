@@ -20,7 +20,7 @@ logger = logging.getLogger("ai_core")
 @dataclass
 class LLMInfo:
     model: str
-    llm_base_url: str
+    llm_base_url: str | None
     temperature: float
     max_tokens: int
     supports_function_calling: int
@@ -126,9 +126,7 @@ class LLMEndpoint:
     def info(self) -> LLMInfo:
         return LLMInfo(
             model=self._config.model,
-            llm_base_url=(
-                self._config.llm_base_url if self._config.llm_base_url else "openai"
-            ),
+            llm_base_url=self._config.llm_base_url,
             temperature=self._config.temperature,
             max_tokens=self._config.max_output_tokens,
             supports_function_calling=self.supports_func_calling(),
@@ -142,7 +140,7 @@ def default_llm() -> LLMEndpoint:
     try:
         logger.debug(f"Loaded {DEFAULT_LLM_NAME} as default LLM for knowledge warehouse")
         llm = LLMEndpoint.from_config(
-            LLMEndpointConfig(supplier=DefaultModelSuppliers.META, model=DEFAULT_LLM_NAME)
+            LLMEndpointConfig(supplier=DefaultModelSuppliers.MISTRAL, model=DEFAULT_LLM_NAME)
         )
         return llm
     except ImportError as e:

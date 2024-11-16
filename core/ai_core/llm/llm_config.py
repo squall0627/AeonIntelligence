@@ -27,7 +27,8 @@ class LLMName(str, Enum):
     claude_2_0 = "claude-2-0"
     claude_instant_1_2 = "claude-instant-1-2"
     llama3_2_vision_11b = "llama3.2-vision:11b"
-    llama_3_1 = "llama-3.1"
+    llama_3_1_8b = "llama3.1:8b"
+    llama_3_1_70b = "llama3.1:70b"
     llama_3 = "llama-3"
     llama_2 = "llama-2"
     code_llama = "code-llama"
@@ -36,7 +37,7 @@ class LLMName(str, Enum):
     mistral_nemo = "mistral-nemo"
     codestral = "codestral"
 
-DEFAULT_LLM_NAME = LLMName.llama3_2_vision_11b
+DEFAULT_LLM_NAME = LLMName.mistral_small
 
 class DefaultModelSuppliers(str, Enum):
     OPENAI = "openai"
@@ -95,9 +96,12 @@ class LLMModelConfig:
         },
         DefaultModelSuppliers.META: {
             LLMName.llama3_2_vision_11b: LLMConfig(
+                context=128000, tokenizer_hub="Xenova/Meta-Llama-3.1-Tokenizer", supports_func_calling=False
+            ),
+            LLMName.llama_3_1_8b: LLMConfig(
                 context=128000, tokenizer_hub="Xenova/Meta-Llama-3.1-Tokenizer"
             ),
-            LLMName.llama_3_1: LLMConfig(
+            LLMName.llama_3_1_70b: LLMConfig(
                 context=128000, tokenizer_hub="Xenova/Meta-Llama-3.1-Tokenizer"
             ),
             LLMName.llama_3: LLMConfig(
@@ -147,7 +151,7 @@ class LLMModelConfig:
         return None
 
 class LLMEndpointConfig(AIBaseConfig):
-    supplier: DefaultModelSuppliers = DefaultModelSuppliers.META
+    supplier: DefaultModelSuppliers = DefaultModelSuppliers.MISTRAL
     model: str = DEFAULT_LLM_NAME
     context_length: int | None = None
     tokenizer_hub: str | None = None

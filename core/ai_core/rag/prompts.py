@@ -67,16 +67,16 @@ def _define_custom_prompts() -> CustomPromptsDict:
         "- You must use ONLY the provided context to answer the question. "
         "Do not use any prior knowledge or external information, even if you are certain of the answer.\n"
         "- If you cannot provide an answer using ONLY the context provided, do not attempt to answer from your own knowledge."
-        "Instead, inform the user that the answer isn't available in the context and suggest using the available tools {tools}.\n"
+        # "Instead, inform the user that the answer isn't available in the context and suggest using the available tools {tools}.\n"
         "- Do not apologize when providing an answer.\n"
         "- Don't cite the source id in the answer objects, but you can use the source to answer the question.\n\n"
     )
 
     context_template = (
         "\n"
-        "- You have access to the following internal reasoning to provide an answer: {reasoning}\n"
+        # "- You have access to the following internal reasoning to provide an answer: {reasoning}\n"
         "- You have access to the following files to answer the user question (limited to first 20 files): {files}\n"
-        "- You have access to the following context to answer the user question: {context}\n"
+        # "- You have access to the following context to answer the user question: {context}\n"
         "- Follow these user instruction when crafting the answer: {custom_instructions}\n"
         "- These user instructions shall take priority over any other previous instruction.\n"
         "- Remember: if you cannot provide an answer using ONLY the provided context and CITING the sources, "
@@ -87,13 +87,13 @@ def _define_custom_prompts() -> CustomPromptsDict:
 
     template_answer = (
         "Original task: {question}\n"
-        "Rephrased and contextualized task: {rephrased_task}\n"
+        # "Rephrased and contextualized task: {rephrased_task}\n"
     )
 
     RAG_ANSWER_PROMPT = ChatPromptTemplate.from_messages(
         [
             SystemMessagePromptTemplate.from_template(system_message_template),
-            MessagesPlaceholder(variable_name="chat_history"),
+            # MessagesPlaceholder(variable_name="chat_history"),
             SystemMessagePromptTemplate.from_template(context_template),
             HumanMessagePromptTemplate.from_template(template_answer),
         ]
