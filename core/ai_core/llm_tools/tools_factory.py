@@ -1,13 +1,14 @@
 from typing import Dict, Any, Type, Union
 
+from core.ai_core.llm_tools.cited_answer_tool import CitedAnswerTools
 from core.ai_core.llm_tools.entity import ToolWrapper
 
 TOOLS_CATEGORIES = {
-    """TODO"""""
+    CitedAnswerTools.name: CitedAnswerTools,
 }
 
 TOOLS_LISTS = {
-    """TODO"""""
+    **{tool.value: tool for tool in CitedAnswerTools.tools},
 }
 
 class LLMToolFactory:

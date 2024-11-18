@@ -19,7 +19,6 @@ from core.ai_core.files.file import load_aifile
 from core.ai_core.knowledge_warehouse.serialization import KWSerialized
 from core.ai_core.llm.llm_endpoint import LLMEndpoint, LLMInfo, default_llm
 from core.ai_core.processor.processor_registry import get_processor_class
-from core.ai_core.rag.ai_rag import AiQARAG
 from core.ai_core.rag.ai_rag_config import RetrievalConfig
 from core.ai_core.rag.ai_rag_langgraph import AiQARAGLangGraph
 from core.ai_core.rag.entities.chat import ChatHistoryInfo, ChatHistory
@@ -411,7 +410,7 @@ class KnowledgeWarehouse:
             self,
             question: str,
             retrieval_config: RetrievalConfig | None = None,
-            rag_pipeline: Type[Union[AiQARAG, AiQARAGLangGraph]] | None = None,
+            rag_pipeline: Type[Union[AiQARAGLangGraph]] | None = None,
             list_files: list[AiKnowledge] | None = None,
             chat_history: ChatHistory | None = None,
     ) -> AsyncGenerator[ParsedRAGChunkResponse, ParsedRAGChunkResponse]:
@@ -420,7 +419,7 @@ class KnowledgeWarehouse:
         引数:
         - question (str): 質問内容。
         - retrieval_config (RetrievalConfig | None): 検索設定（詳細は RetrievalConfig のドキュメントを参照）。
-        - rag_pipeline (Type[Union[AiQARAG, AiQARAGLangGraph]] | None): 使用する RAG パイプライン。
+        - rag_pipeline (Type[Union[AiQARAGLangGraph]] | None): 使用する RAG パイプライン。
         - list_files (list[AiKnowledge] | None): RAG パイプラインに含めるファイルのリスト。
         - chat_history (ChatHistory | None): 使用するチャット履歴。
 
@@ -454,17 +453,14 @@ class KnowledgeWarehouse:
         list_files = [] if list_files is None else list_files
 
         full_answer = ""
-        if rag_pipeline == AiQARAG:
-            response = rag_instance.answer(question=question, history=chat_history, list_files=list_files)
-            full_answer = response.answer
-        elif rag_pipeline == AiQARAGLangGraph:
-            async for response in rag_instance.answer_astream(
-                    question=question, history=chat_history, list_files=list_files
-            ):
-                # Format output
-                if not response.last_chunk:
-                    yield response
-                full_answer += response.answer
+
+        async for response in rag_instance.answer_astream(
+                question=question, history=chat_history, list_files=list_files
+        ):
+            # Format output
+            if not response.last_chunk:
+                yield response
+            full_answer += response.answer
 
         chat_history.append(HumanMessage(content=question))
         chat_history.append(AIMessage(content=full_answer))
@@ -474,7 +470,7 @@ class KnowledgeWarehouse:
             self,
             question: str,
             retrieval_config: RetrievalConfig | None = None,
-            rag_pipeline: Type[Union[AiQARAG, AiQARAGLangGraph]] | None = None,
+            rag_pipeline: Type[Union[AiQARAGLangGraph]] | None = None,
             list_files: list[AiKnowledge] | None = None,
             chat_history: ChatHistory | None = None,
     ) -> ParsedRAGResponse:
@@ -483,7 +479,7 @@ class KnowledgeWarehouse:
         引数:
         - question (str): 質問内容。
         - retrieval_config (RetrievalConfig | None): 検索設定（詳細は RetrievalConfig のドキュメントを参照）。
-        - rag_pipeline (Type[Union[AiQARAG, AiQARAGLangGraph]] | None): 使用する RAG パイプライン。
+        - rag_pipeline (Type[Union[AiQARAGLangGraph]] | None): 使用する RAG パイプライン。
         - list_files (list[AiKnowledge] | None): RAG パイプラインに含めるファイルのリスト。
         - chat_history (ChatHistory | None): 使用するチャット履歴。
 
@@ -507,7 +503,7 @@ class KnowledgeWarehouse:
             self,
             question: str,
             retrieval_config: RetrievalConfig | None = None,
-            rag_pipeline: Type[Union[AiQARAG, AiQARAGLangGraph]] | None = None,
+            rag_pipeline: Type[Union[AiQARAGLangGraph]] | None = None,
             list_files: list[AiKnowledge] | None = None,
             chat_history: ChatHistory | None = None,
     ) -> ParsedRAGResponse:
@@ -516,7 +512,7 @@ class KnowledgeWarehouse:
         引数:
         - question (str): 質問内容。
         - retrieval_config (RetrievalConfig | None): 検索設定（詳細は RetrievalConfig のドキュメントを参照）。
-        - rag_pipeline (Type[Union[AiQARAG, AiQARAGLangGraph]] | None): 使用する RAG パイプライン。
+        - rag_pipeline (Type[Union[AiQARAGLangGraph]] | None): 使用する RAG パイプライン。
         - list_files (list[AiKnowledge] | None): RAG パイプラインに含めるファイルのリスト。
         - chat_history (ChatHistory | None): 使用するチャット履歴。
 

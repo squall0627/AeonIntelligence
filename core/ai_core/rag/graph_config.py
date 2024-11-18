@@ -7,6 +7,7 @@ from langchain_core.tools import BaseTool
 from langgraph.graph import START, END
 
 from core.ai_core.base_config import AIBaseConfig
+from core.ai_core.llm_tools.cited_answer_tool import CitedAnswerToolsList
 from core.ai_core.llm_tools.tools_factory import LLMToolFactory, TOOLS_CATEGORIES, TOOLS_LISTS
 
 
@@ -76,23 +77,27 @@ class DefaultWorkflow(str, Enum):
         workflows = {
             self.RAG: [
                 NodeConfig(name=START, edges=["filter_history"]),
-                NodeConfig(name="filter_history", edges=["rewrite"]),
-                NodeConfig(name="rewrite", edges=["retrieve"]),
+                NodeConfig(name="filter_history", edges=["rephrase_question"]),
+                NodeConfig(name="rephrase_question", edges=["retrieve"]),
                 NodeConfig(name="retrieve", edges=["generate_rag"]),
-                NodeConfig(name="generate_rag", edges=[END]),
+                NodeConfig(name="generate_rag", edges=[END], tools=[{"name": CitedAnswerToolsList.SIMPLE_CITED_ANSWER}]),
             ]
         }
         return workflows[self]
 
 class WorkflowConfig(AIBaseConfig):
     name: str | None = None
-    nodes: List[NodeConfig] = []
+    nodes: List[NodeConfig]
     available_tools: List[str] | None = None
-    validated_tools: List[BaseTool | Type] = []
-    activated_tools: List[BaseTool | Type] = []
+    validated_tools: List[BaseTool | Type] | None = None
+    activated_tools: List[BaseTool | Type] | None = None
 
     def __init__(self, **data):
         super().__init__(**data)
+        if self.validated_tools is None:
+            self.validated_tools = []
+        if self.activated_tools is None:
+            self.activated_tools = []
         self.check_first_node_is_start()
         self.validate_available_tools()
 
@@ -126,3 +131,16 @@ class WorkflowConfig(AIBaseConfig):
             if node.name == node_name and node.instantiated_tools:
                 return node.instantiated_tools
         return []
+
+    def collect_tools_prompt(self):
+        validated_tools = "Available tools which can be activated:\n"
+        for i, tool in enumerate(self.validated_tools):
+            validated_tools += f"Tool {i+1} name: {tool.name}\n"
+            validated_tools += f"Tool {i+1} description: {tool.description}\n\n"
+
+        activated_tools = "Activated tools which can be deactivated:\n"
+        for i, tool in enumerate(self.activated_tools):
+            activated_tools += f"Tool {i+1} name: {tool.name}\n"
+            activated_tools += f"Tool {i+1} description: {tool.description}\n\n"
+
+        return validated_tools, activated_tools
