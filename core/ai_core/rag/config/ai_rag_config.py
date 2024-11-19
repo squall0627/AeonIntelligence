@@ -1,12 +1,11 @@
 import os
-
 from enum import Enum
 
 from core.ai_core.base_config import AIBaseConfig
 from core.ai_core.llm.llm_config import LLMEndpointConfig
-from core.ai_core.rag.graph_config import WorkflowConfig, DefaultWorkflow
+from core.ai_core.rag.ai_rag_workflow import DefaultWorkflow
+from core.ai_core.rag.config.langgraph_config import WorkflowConfig
 from core.ai_core.utils.utils import normalize_to_env_variable_name
-
 
 class DefaultRerankers(str, Enum):
     COHERE = "cohere"

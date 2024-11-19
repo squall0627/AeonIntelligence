@@ -7,7 +7,6 @@ from langchain_core.tools import BaseTool
 from langgraph.graph import START, END
 
 from core.ai_core.base_config import AIBaseConfig
-from core.ai_core.llm_tools.cited_answer_tool import CitedAnswerToolsList
 from core.ai_core.llm_tools.tools_factory import LLMToolFactory, TOOLS_CATEGORIES, TOOLS_LISTS
 
 
@@ -68,22 +67,6 @@ class NodeConfig(AIBaseConfig):
                     self.edges[i] = START
                 elif edge == SpecialEdges.end:
                     self.edges[i] = END
-
-class DefaultWorkflow(str, Enum):
-    RAG = "rag"
-
-    @property
-    def nodes(self) -> List[NodeConfig]:
-        workflows = {
-            self.RAG: [
-                NodeConfig(name=START, edges=["filter_history"]),
-                NodeConfig(name="filter_history", edges=["rephrase_question"]),
-                NodeConfig(name="rephrase_question", edges=["retrieve"]),
-                NodeConfig(name="retrieve", edges=["generate_rag"]),
-                NodeConfig(name="generate_rag", edges=[END], tools=[{"name": CitedAnswerToolsList.SIMPLE_CITED_ANSWER}]),
-            ]
-        }
-        return workflows[self]
 
 class WorkflowConfig(AIBaseConfig):
     name: str | None = None

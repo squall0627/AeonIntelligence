@@ -19,7 +19,7 @@ class KnowledgeStatus(str, Enum):
     PROCESSED = "PROCESSED"
     UPLOADED = "UPLOADED"
 
-class AiKnowledge(BaseModel):
+class AIKnowledge(BaseModel):
     id: UUID
     file_name: str
     brain_ids: list[UUID] | None = None

@@ -19,10 +19,10 @@ from core.ai_core.files.file import load_aifile
 from core.ai_core.knowledge_warehouse.serialization import KWSerialized
 from core.ai_core.llm.llm_endpoint import LLMEndpoint, LLMInfo, default_llm
 from core.ai_core.processor.processor_registry import get_processor_class
-from core.ai_core.rag.ai_rag_config import RetrievalConfig
+from core.ai_core.rag.config.ai_rag_config import RetrievalConfig
 from core.ai_core.rag.ai_rag_langgraph import AiQARAGLangGraph
 from core.ai_core.rag.entities.chat import ChatHistoryInfo, ChatHistory
-from core.ai_core.rag.entities.models import SearchResult, AiKnowledge, ParsedRAGChunkResponse, ParsedRAGResponse
+from core.ai_core.rag.entities.models import SearchResult, AIKnowledge, ParsedRAGChunkResponse, ParsedRAGResponse
 from core.ai_core.storage.storage_base import StorageBase, StorageInfo
 from core.ai_core.storage.storage_builder import StorageBuilder
 from core.ai_core.embedder.embedder_builder import EmbedderBuilder
@@ -411,7 +411,7 @@ class KnowledgeWarehouse:
             question: str,
             retrieval_config: RetrievalConfig | None = None,
             rag_pipeline: Type[Union[AiQARAGLangGraph]] | None = None,
-            list_files: list[AiKnowledge] | None = None,
+            list_files: list[AIKnowledge] | None = None,
             chat_history: ChatHistory | None = None,
     ) -> AsyncGenerator[ParsedRAGChunkResponse, ParsedRAGChunkResponse]:
         """
@@ -471,7 +471,7 @@ class KnowledgeWarehouse:
             question: str,
             retrieval_config: RetrievalConfig | None = None,
             rag_pipeline: Type[Union[AiQARAGLangGraph]] | None = None,
-            list_files: list[AiKnowledge] | None = None,
+            list_files: list[AIKnowledge] | None = None,
             chat_history: ChatHistory | None = None,
     ) -> ParsedRAGResponse:
         """
@@ -504,7 +504,7 @@ class KnowledgeWarehouse:
             question: str,
             retrieval_config: RetrievalConfig | None = None,
             rag_pipeline: Type[Union[AiQARAGLangGraph]] | None = None,
-            list_files: list[AiKnowledge] | None = None,
+            list_files: list[AIKnowledge] | None = None,
             chat_history: ChatHistory | None = None,
     ) -> ParsedRAGResponse:
         """

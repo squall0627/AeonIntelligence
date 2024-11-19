@@ -1,28 +1,13 @@
-from typing import Any, List, Generator, Tuple, Union
+from typing import Any, List, Generator, Tuple
 from dataclasses import dataclass
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from datetime import datetime
 
 from langchain_core.messages import AIMessage, HumanMessage, BaseMessage
 from rich.tree import Tree
 
-class CitedAnswer(BaseModel):
-    """指定された情報源のみに基づいてユーザーの質問に答え、使用した情報源を引用します。"""
-
-    answer: str = Field(
-        ...,
-        description="The answer to the user question, which is based only on the given sources.",
-    )
-    citations: list[int] = Field(
-        ...,
-        description="The integer IDs of the SPECIFIC sources which justify the answer.",
-    )
-    followup_questions: list[str] = Field(
-        ...,
-        description="Generate up to 3 follow-up questions that could be asked based on the answer given or context provided.",
-    )
 
 class ChatMessage(BaseModel):
     chat_id: UUID

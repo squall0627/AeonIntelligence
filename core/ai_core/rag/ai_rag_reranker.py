@@ -5,7 +5,7 @@ from langchain_community.document_compressors import JinaRerank
 from langchain_core.callbacks import Callbacks
 from langchain_core.documents import BaseDocumentCompressor, Document
 
-from core.ai_core.rag.ai_rag_config import RetrievalConfig, DefaultRerankers
+from core.ai_core.rag.config.ai_rag_config import RetrievalConfig, DefaultRerankers
 
 
 class IdempotentCompressor(BaseDocumentCompressor):
