@@ -5,10 +5,10 @@ from langchain_core.vectorstores import VectorStore
 from core.ai_core.llm import LLMEndpoint
 from core.ai_core.rag.config.ai_rag_config import RetrievalConfig
 from core.ai_core.rag.entities.chat import ChatHistory
-from core.ai_core.rag.node_functions.base_node_function import BaseNodeFunction, AgentState
+from core.ai_core.rag.node_functions.node_function_base import NodeFunctionBase, AgentState
 
 
-class FilterHistory(BaseNodeFunction):
+class FilterHistory(NodeFunctionBase):
     name="filter_history"
     is_async=False
 
@@ -20,17 +20,16 @@ class FilterHistory(BaseNodeFunction):
 
     def run(self, state: AgentState) -> AgentState:
         """
-        チャット履歴をフィルタリングして、現在の質問に関連するメッセージのみを含めます。
+        Filter out the chat history to only include the messages that are relevant to the current question
 
-        引数:
-        - state (AgentState) = チャット履歴を含む Graph State [HumanMessage(content='Hello! '), AIMessage(content="Hello! What can I do for you."), HumanMessage(content='What is the weather today'), AIMessage(content='It's sunny today.')]
-
-        戻り値:
-        - 優先順位に基づいてフィルタリングされた Graph State。
-          1. max_tokens（トークン数を制限）
-          2. max_history（最大履歴数を制限）
-          の順に適用し、1つの HumanMessage と1つの AIMessage が1ペアとしてカウントされます。
-          ※1トークンは4文字として計算されます。
+        Takes in a chat_history= [HumanMessage(content='Who is Chin Hiroshi ? '),
+        AIMessage(content="Chin Hiroshi is an employee working for the company Aeon as a Software Engineer,
+        under the supervision of his manager, Nomura Tadahiro."),
+        HumanMessage(content='Tell me more about him.'), AIMessage(content=''),
+        HumanMessage(content='Tell me more about him.'),
+        AIMessage(content="Sorry, I don’t have any more information about Chin Hiroshi from the files provided.")]
+        Returns a filtered chat_history with in priority: first max_tokens, then max_history where a Human message and an AI message count as one pair
+        a token is 4 characters
         """
 
         chat_history = state["chat_history"]

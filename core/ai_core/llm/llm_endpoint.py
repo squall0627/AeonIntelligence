@@ -13,6 +13,7 @@ from langchain_openai import AzureChatOpenAI, ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_ollama import ChatOllama
 
+from core.ai_core.llm.llm_callbacks import AgentCallbackHandler
 from core.ai_core.llm.llm_config import LLMEndpointConfig, DefaultModelSuppliers, DEFAULT_LLM_NAME
 
 logger = logging.getLogger("ai_core")
@@ -79,6 +80,7 @@ class LLMEndpoint:
                     azure_endpoint=azure_endpoint,
                     max_tokens=config.max_output_tokens,
                     temperature=config.temperature,
+                    callbacks=[AgentCallbackHandler()]
                 )
             elif config.supplier == DefaultModelSuppliers.ANTHROPIC:
                 _llm = ChatAnthropic(
@@ -89,6 +91,7 @@ class LLMEndpoint:
                     base_url=config.llm_base_url,
                     max_tokens=config.max_output_tokens,
                     temperature=config.temperature,
+                    callbacks=[AgentCallbackHandler()]
                 )
             elif config.supplier == DefaultModelSuppliers.OPENAI:
                 _llm = ChatOpenAI(
@@ -99,12 +102,14 @@ class LLMEndpoint:
                     base_url=config.llm_base_url,
                     max_tokens=config.max_output_tokens,
                     temperature=config.temperature,
+                    callbacks=[AgentCallbackHandler()]
                 )
             else:
                 _llm = ChatOllama(
                     model=config.model,
                     num_ctx=config.context_length,
                     temperature=config.temperature,
+                    callbacks=[AgentCallbackHandler()]
                 )
             return cls(llm=_llm, llm_config=config)
         except ImportError as e:

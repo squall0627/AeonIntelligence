@@ -4,11 +4,11 @@ from langchain_core.vectorstores import VectorStore
 
 from core.ai_core.llm import LLMEndpoint
 from core.ai_core.rag.config.ai_rag_config import RetrievalConfig
-from core.ai_core.rag.node_functions.base_node_function import BaseNodeFunction, AgentState
+from core.ai_core.rag.node_functions.node_function_base import NodeFunctionBase, AgentState
 from core.ai_core.rag.prompts import custom_prompts
 
 
-class RephraseQuestion(BaseNodeFunction):
+class RephraseQuestion(NodeFunctionBase):
     name="rephrase_question"
     is_async=True
 
@@ -23,13 +23,13 @@ class RephraseQuestion(BaseNodeFunction):
 
     async def arun(self, state: AgentState) -> AgentState:
         """
-        クエリを変換して、より良い質問を作成します。
+        Transform the query to produce a better question.
 
-        引数:
-        - state (AgentState): Graph State
+        Args:
+            state (messages): The current state
 
-        戻り値:
-        - 言い換えられた質問を含む更新された Graph State
+        Returns:
+            dict: The updated state with re-phrased question
         """
 
         tasks = (

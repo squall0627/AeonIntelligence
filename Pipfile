@@ -17,6 +17,7 @@ rapidfuzz = "*"
 faiss-cpu = "*"
 protobuf = "*"
 sentencepiece = "*"
+ipython = "*"
 
 [dev-packages]
 

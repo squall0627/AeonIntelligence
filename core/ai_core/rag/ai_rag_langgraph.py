@@ -1,5 +1,7 @@
 import logging
 
+from IPython.display import Image, display
+
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessageChunk
 from langchain_core.vectorstores import VectorStore
@@ -18,7 +20,7 @@ from typing import (
 )
 
 
-from core.ai_core.rag.node_functions.base_node_function import AgentState
+from core.ai_core.rag.node_functions.node_function_base import AgentState
 from core.ai_core.rag.node_functions.node_functions_factory import NodeFunctionsFactory
 
 logger = logging.getLogger("ai_core")
@@ -99,6 +101,8 @@ class AiQARAGLangGraph:
             self._build_workflow(workflow)
 
             self.graph = workflow.compile()
+
+            self._draw_graph()
         return self.graph
 
     def _build_workflow(self, workflow: StateGraph):
@@ -118,7 +122,10 @@ class AiQARAGLangGraph:
                     if edge == END:
                         self.final_nodes.append(node.name)
             elif node.conditional_edge:
-                routing_function = getattr(self, node.conditional_edge.routing_function)
+                routing_function = NodeFunctionsFactory.get_node_function(node.conditional_edge.routing_function,
+                                                                          retrieval_config=self.retrieval_config,
+                                                                          llm=self.llm_endpoint,
+                                                                          vector_store=self.vector_store)
                 workflow.add_conditional_edges(
                     node.name, routing_function, node.conditional_edge.conditions
                 )
@@ -203,3 +210,9 @@ class AiQARAGLangGraph:
         metadata["followup_questions"] = all_followup_questions[:3]  # Limit to 3
 
         return RAGResponseMetadata(**metadata, metadata_model=None)
+
+    def _draw_graph(self):
+        try:
+            display(Image(self.graph.get_graph().draw_mermaid_png()))
+        except Exception as e:
+            raise ValueError(f"Error drawing graph: {e}")

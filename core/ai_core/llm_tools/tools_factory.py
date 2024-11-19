@@ -1,14 +1,17 @@
 from typing import Dict, Any, Type, Union
 
 from core.ai_core.llm_tools.cited_answer_tool import CitedAnswerTools
-from core.ai_core.llm_tools.entity import ToolWrapper
+from core.ai_core.llm_tools.tool_helper import ToolWrapper
+from core.ai_core.llm_tools.web_search_tools import WebSearchTools
 
 TOOLS_CATEGORIES = {
     CitedAnswerTools.name: CitedAnswerTools,
+    WebSearchTools.name: WebSearchTools,
 }
 
 TOOLS_LISTS = {
     **{tool.value: tool for tool in CitedAnswerTools.tools},
+    **{tool.value: tool for tool in WebSearchTools.tools},
 }
 
 class LLMToolFactory:

@@ -4,7 +4,7 @@ from typing import Dict, Any, Union, Type
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from core.ai_core.llm_tools.entity import ToolsCategory
+from core.ai_core.llm_tools.tool_helper import ToolsCategory
 
 
 class SimpleCitedAnswer(BaseModel):
@@ -27,7 +27,7 @@ class SimpleCitedAnswer(BaseModel):
 class CitedAnswerToolsList(str, Enum):
     SIMPLE_CITED_ANSWER = "cited_answer"
 
-def create_other_tool(tool_name: str, config: Dict[str, Any]) -> Union[BaseTool, Type]:
+def create_cited_answer(tool_name: str, config: Dict[str, Any]) -> Union[BaseTool, Type]:
     if tool_name == CitedAnswerToolsList.SIMPLE_CITED_ANSWER:
         return SimpleCitedAnswer
     else:
@@ -37,5 +37,5 @@ CitedAnswerTools = ToolsCategory(
     name="cited_answer",
     description="Cited answer tools",
     tools=[CitedAnswerToolsList.SIMPLE_CITED_ANSWER],
-    create_tool=create_other_tool,
+    create_tool=create_cited_answer,
 )

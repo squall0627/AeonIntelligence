@@ -35,6 +35,7 @@ class LLMName(str, Enum):
     mistral_large = "mistral-large"
     mistral_small = "mistral-small"
     mistral_nemo = "mistral-nemo"
+    mistral_7b = "mistral"
     codestral = "codestral"
 
 DEFAULT_LLM_NAME = LLMName.mistral_small
@@ -119,6 +120,9 @@ class LLMModelConfig:
             LLMName.mistral_small: LLMConfig(
                 context=128000, tokenizer_hub="Xenova/mistral-tokenizer-v3"
             ),
+            LLMName.mistral_7b: LLMConfig(
+                context=128000, tokenizer_hub="Xenova/mistral-tokenizer-v3"
+            ),
             LLMName.mistral_nemo: LLMConfig(
                 context=128000, tokenizer_hub="Xenova/Mistral-Nemo-Instruct-Tokenizer"
             ),
@@ -158,8 +162,8 @@ class LLMEndpointConfig(AIBaseConfig):
     llm_base_url: str | None = None
     env_variable_name: str | None = None
     llm_api_key: str | None = None
-    max_context_tokens: int = 2000
-    max_output_tokens: int = 2000
+    max_context_tokens: int = 8000
+    max_output_tokens: int = 8000
     temperature: float = 0.7
     streaming: bool = True
     prompt: CustomPromptsModel | None = None

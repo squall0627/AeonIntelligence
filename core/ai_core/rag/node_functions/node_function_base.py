@@ -3,7 +3,6 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Type, Dict, List, Tuple, TypedDict, Annotated, Sequence
 
-import openai
 from langchain_core.documents import Document
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts import BasePromptTemplate, format_document
@@ -28,7 +27,7 @@ class AgentState(TypedDict):
     instructions: str
     tool: str
 
-class BaseNodeFunction(ABC):
+class NodeFunctionBase(ABC):
 
     def __init__(
             self,
@@ -99,16 +98,10 @@ class BaseNodeFunction(ABC):
         return inputs, docs
 
     def invoke_structured_output(
-            self, prompt: str, output_class: Type[BaseModel]
+            self, prompt: str, output_class: type[BaseModel]
     ) -> Any:
-        try:
-            structured_llm = self.llm_endpoint.llm.with_structured_output(
-                output_class, method="json_schema"
-            )
-            return structured_llm.invoke(prompt)
-        except openai.BadRequestError:
-            structured_llm = self.llm_endpoint.llm.with_structured_output(output_class)
-            return structured_llm.invoke(prompt)
+        structured_llm = self.llm_endpoint.llm.with_structured_output(output_class)
+        return structured_llm.invoke(prompt)
 
     @classmethod
     def combine_documents(
@@ -152,3 +145,33 @@ class BaseNodeFunction(ABC):
             if tools:
                 return self.llm_endpoint.llm.bind_tools(tools, tool_choice="any")
         return self.llm_endpoint.llm
+
+    def build_rag_prompt_inputs(
+            self, state: AgentState, docs: List[Document] | None
+    ) -> Dict[str, Any]:
+        """
+        RAG_ANSWER_PROMPT の入力辞書を構築します。
+
+        引数:
+        - state: Graph State
+        - docs: ドキュメントのリスト、または `None`
+
+        戻り値:
+        - RAG_ANSWER_PROMPT に必要なすべての入力を含む辞書
+        """
+        messages = state["messages"]
+        user_question = messages[0].content
+        files = state["files"]
+        prompt = self.retrieval_config.prompt
+        available_tools, _ = self.retrieval_config.workflow_config.collect_tools_prompt()
+
+        return {
+            "context": self.combine_documents(docs) if docs else "None",
+            "question": user_question,
+            "rephrased_task": state["tasks"],
+            "custom_instructions": prompt if prompt else "None",
+            "files": files if files else "None",
+            "chat_history": state["chat_history"].to_list(),
+            "reasoning": state["reasoning"] if "reasoning" in state else "None",
+            "tools": available_tools,
+        }

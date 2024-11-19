@@ -22,7 +22,7 @@ class KnowledgeStatus(str, Enum):
 class AIKnowledge(BaseModel):
     id: UUID
     file_name: str
-    brain_ids: list[UUID] | None = None
+    kw_ids: list[UUID] | None = None
     url: Optional[str] = None
     extension: str = ".txt"
     mime_type: str = "txt"

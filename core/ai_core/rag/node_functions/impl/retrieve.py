@@ -7,10 +7,10 @@ from core.ai_core.llm import LLMEndpoint
 from core.ai_core.rag.ai_rag_reranker import AIRagReranker
 from core.ai_core.rag.ai_rag_retriever import AIRagRetriever
 from core.ai_core.rag.config.ai_rag_config import RetrievalConfig
-from core.ai_core.rag.node_functions.base_node_function import BaseNodeFunction, AgentState
+from core.ai_core.rag.node_functions.node_function_base import NodeFunctionBase, AgentState
 
 
-class Retrieve(BaseNodeFunction):
+class Retrieve(NodeFunctionBase):
     name="retrieve"
     is_async=True
 
@@ -25,13 +25,13 @@ class Retrieve(BaseNodeFunction):
 
     async def arun(self, state: AgentState) -> AgentState:
         """
-        関連するチャンクを取得します。
+        Retrieve relevant chunks
 
-        引数:
-        - state (AgentState): Graph State
+        Args:
+            state (messages): The current state
 
-        戻り値:
-        - 取得された関連するチャンク
+        Returns:
+            dict: The retrieved chunks
         """
 
         tasks = state["tasks"]

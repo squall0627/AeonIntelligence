@@ -5,10 +5,10 @@ from langchain_core.vectorstores import VectorStore
 from core.ai_core.llm import LLMEndpoint
 from core.ai_core.llm_tools.tools_factory import LLMToolFactory
 from core.ai_core.rag.config.ai_rag_config import RetrievalConfig
-from core.ai_core.rag.node_functions.base_node_function import BaseNodeFunction, AgentState
+from core.ai_core.rag.node_functions.node_function_base import NodeFunctionBase, AgentState
 
 
-class RunTool(BaseNodeFunction):
+class RunTool(NodeFunctionBase):
     name="run_tool"
     is_async=True
 
@@ -35,6 +35,7 @@ class RunTool(BaseNodeFunction):
         # Prepare the async tasks for all questions
         async_tasks = []
         for task in tasks:
+            print(f"##########Tool {tool_wrapper.tool.name} Run##########")
             formatted_input = tool_wrapper.format_input(task)
             # Asynchronously invoke the model for each question
             async_tasks.append(tool_wrapper.tool.ainvoke(formatted_input))
