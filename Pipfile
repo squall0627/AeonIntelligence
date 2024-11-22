@@ -18,6 +18,13 @@ faiss-cpu = "*"
 protobuf = "*"
 sentencepiece = "*"
 ipython = "*"
+streamlit-chat = "*"
+streamlit = "*"
+pyperclip = "*"
+docx2txt = "*"
+unstructured = "*"
+"pdfminer.six" = "*"
+pillow-heif = "*"
 
 [dev-packages]
 

@@ -487,6 +487,7 @@ class KnowledgeWarehouse:
         - ParsedRAGResponse: 生成された回答。
         """
         full_answer = ""
+        metadata = None
 
         async for response in self.ask_streaming(
                 question=question,
@@ -496,8 +497,10 @@ class KnowledgeWarehouse:
                 chat_history=chat_history,
         ):
             full_answer += response.answer
+            if response.last_chunk:
+                metadata = response.metadata
 
-        return ParsedRAGResponse(answer=full_answer)
+        return ParsedRAGResponse(answer=full_answer, metadata=metadata)
 
     def ask(
             self,
@@ -529,3 +532,8 @@ class KnowledgeWarehouse:
                 chat_history=chat_history,
             )
         )
+
+    def add_file(self, file_path: str) -> None:
+        # TODO add it to storage
+        # TODO add it to vectorstore
+        pass

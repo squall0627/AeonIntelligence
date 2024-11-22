@@ -29,8 +29,9 @@ def test_load():
 
     # response = kw.ask("イオンアイビス株式会社とイオンスマートテクノロジー株式会社の統合時期はいつですか？", rag_pipeline=AiQARAG)
     # response = kw.ask("イオンスマートテクノロジー株式会社をご紹介ください。", retrieval_config=retrieval_config)
-    response = kw.ask("Can you tell me what is the Tavily?", retrieval_config=retrieval_config)
-    response = kw.ask("Yes, Use Tavily Search Tool.", retrieval_config=retrieval_config)
+    # response = kw.ask("Can you tell me what is the Tavily?", retrieval_config=retrieval_config)
+    # response = kw.ask("Yes, Use Tavily Search Tool.", retrieval_config=retrieval_config)
+    response = kw.ask("イオンスマートテクノロジー株式会社をご紹介ください。")
 
     print(response.model_dump())
     print(response.answer)

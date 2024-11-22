@@ -2,6 +2,7 @@ import logging
 import os
 import tiktoken
 
+from transformers import AutoTokenizer
 from dataclasses import dataclass
 from typing import Union
 from urllib.parse import parse_qs, urlparse
@@ -50,8 +51,6 @@ class LLMEndpoint:
                 else os.environ["TOKENIZERS_PARALLELISM"]
             )
             try:
-                from transformers import AutoTokenizer
-
                 self.tokenizer = AutoTokenizer.from_pretrained(llm_config.tokenizer_hub)
             except OSError:  # Hugging Face に接続できない場合、またはキャッシュされたモデルが存在しない場合
                 logger.warning(
