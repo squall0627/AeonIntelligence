@@ -27,12 +27,15 @@ class TransparentStorage(StorageBase):
         return list(self.id_files.values())
 
     async def upload_file(self, file: AIFile, exists_ok: bool = False) -> None:
-        # TODO ファイル名が既に存在する場合の処理
+        # file already exists
+        if file.file_id in self.id_files and not exists_ok:
+            raise FileExistsError(f"file {file.original_filename} already uploaded")
         self.id_files[file.file_id] = file
 
     async def remove_file(self, file_id: UUID) -> None:
-        # TODO
-        raise NotImplementedError
+        # delete file from storage
+        if file_id in self.id_files:
+            del self.id_files[file_id]
 
     def get_directory_path(self) -> str | None:
         return None

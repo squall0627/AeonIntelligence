@@ -45,6 +45,7 @@ class AIFileSerialized(BaseModel):
     file_extension: FileExtension | str
     kw_id: UUID | None = None
     file_size: int | None = None
+    vectordb_ids: list[str] | None = None
     additional_metadata: dict[str, Any] | None = None
 
 def get_file_extension(file_path: Path) -> FileExtension | str:
@@ -98,6 +99,7 @@ class AIFile:
         "file_size",
         "file_extension",
         "file_sha1",
+        "vectordb_ids",
         "additional_metadata",
     ]
 
@@ -110,6 +112,7 @@ class AIFile:
             file_extension: FileExtension | str,
             kw_id: UUID | None = None,
             file_size: int | None = None,
+            vectordb_ids: list[str] | None = None,
             metadata: dict[str, Any] | None = None,
     ) -> None:
         self.file_id = file_id
@@ -119,6 +122,7 @@ class AIFile:
         self.file_size = file_size
         self.file_extension = file_extension
         self.file_sha1 = file_sha1
+        self.vectordb_ids = vectordb_ids if vectordb_ids else []
         self.additional_metadata = metadata if metadata else {}
 
     def __repr__(self) -> str:
@@ -144,6 +148,7 @@ class AIFile:
             file_size=self.file_size,
             file_extension=self.file_extension,
             file_sha1=self.file_sha1,
+            vectordb_ids=self.vectordb_ids,
             additional_metadata=self.additional_metadata,
         )
 
@@ -157,5 +162,6 @@ class AIFile:
             file_size=serialized.file_size,
             file_extension=serialized.file_extension,
             file_sha1=serialized.file_sha1,
+            vectordb_ids=serialized.vectordb_ids,
             metadata=serialized.additional_metadata,
         )

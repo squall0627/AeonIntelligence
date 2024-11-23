@@ -67,8 +67,16 @@ class LocalStorage(StorageBase):
         self.hashes.add(file.file_sha1)
 
     async def remove_file(self, file_id: UUID) -> None:
-        # TODO
-        raise NotImplementedError
+        # delete file from storage
+        for file in self.files:
+            if file.file_id == file_id:
+                if self.copy_flag:
+                    os.remove(file.path)  # Remove actual file
+                else:
+                    os.unlink(file.path)  # Remove symbolic link
+                self.files.remove(file)
+                self.hashes.discard(file.file_sha1)
+                break
 
     def get_directory_path(self) -> str | None:
         return str(self.dir_path)

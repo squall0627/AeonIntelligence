@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import shutil
 
 from pathlib import Path
 from pprint import PrettyPrinter
@@ -15,6 +16,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage
 
 from core.ai_core.embedder.embedder_base import EmbedderBase
+from core.ai_core.files import AIFile
 from core.ai_core.files.file import load_aifile
 from core.ai_core.knowledge_warehouse.serialization import KWSerialized
 from core.ai_core.llm.llm_endpoint import LLMEndpoint, LLMInfo, default_llm
@@ -31,15 +33,14 @@ from core.ai_core.vectordb.vectordb_builder import VectordbBuilder
 
 logger = logging.getLogger("ai_core")
 
-async def process_files(
-        storage: StorageBase, skip_file_error: bool, **processor_kwargs: dict[str, Any]
+async def process_file(
+        file: AIFile, **processor_kwargs: dict[str, Any]
 ) -> list[Document]:
     """
     ストレージ内のファイルを処理します。
-    この関数は StorageBase を受け取り、Langchain ドキュメントのリストを返します。
+    この関数は AIFile を受け取り、Langchain ドキュメントのリストを返します。
     引数:
-    - storage (StorageBase): 処理するファイルを含むストレージ。
-    - skip_file_error (bool): 処理できないファイルをスキップするかどうか。
+    - file (AIFile): 処理するファイルを含むストレージ。
     - processor_kwargs (dict[str, Any]): プロセッサへの追加の引数。
 
     戻り値:
@@ -51,25 +52,19 @@ async def process_files(
     """
 
     knowledge = []
-    for file in await storage.get_files():
-        try:
-            if file.file_extension:
-                processor_cls = get_processor_class(file.file_extension)
-                logger.debug(f"processing {file} using class {processor_cls.__name__}")
-                processor = processor_cls(**processor_kwargs)
-                docs = await processor.process_file(file)
-                knowledge.extend(docs)
-            else:
-                logger.error(f"can't find processor for {file}")
-                if skip_file_error:
-                    continue
-                else:
-                    raise ValueError(f"can't parse {file}. can't find file extension")
-        except KeyError as e:
-            if skip_file_error:
-                continue
-            else:
-                raise Exception(f"Can't parse {file}. No available processor") from e
+
+    try:
+        if file.file_extension:
+            processor_cls = get_processor_class(file.file_extension)
+            logger.debug(f"processing {file} using class {processor_cls.__name__}")
+            processor = processor_cls(**processor_kwargs)
+            docs = await processor.process_file(file)
+            knowledge.extend(docs)
+        else:
+            logger.error(f"can't find processor for {file}")
+            raise ValueError(f"can't parse {file}. can't find file extension")
+    except KeyError as e:
+        raise Exception(f"Can't parse {file}. No available processor") from e
 
     return knowledge
 
@@ -130,6 +125,7 @@ class KnowledgeWarehouse:
             vector_db: VectordbBase | None = None,
             embedder: EmbedderBase | None = None,
             storage: StorageBase | None = None,
+            kw_path: str | Path | None = None,
     ):
         self.kw_id = kw_id
         self.name = name
@@ -143,6 +139,9 @@ class KnowledgeWarehouse:
         self.llm = llm
         self.vector_db = vector_db
         self.embedder = embedder
+
+        # Path to the folder where the KW is saved
+        self.kw_path = kw_path
 
     def __repr__(self) -> str:
         pp = PrettyPrinter(width=80, depth=None, compact=False, sort_dicts=False)
@@ -196,6 +195,7 @@ class KnowledgeWarehouse:
             llm=LLMEndpoint.from_config(kw_serialized.llm_config),
             storage=storage,
             vector_db=vector_db,
+            kw_path=folder_path
         )
 
     async def save(self, folder_path: str | Path):
@@ -219,6 +219,8 @@ class KnowledgeWarehouse:
         kw_path = os.path.join(folder_path, f"kw_{self.kw_id}")
         os.makedirs(kw_path, exist_ok=True)
 
+        self.kw_path = kw_path
+
         # Save serialized vector db
         vectordb_config = await self.vector_db.save(kw_path)
 
@@ -241,6 +243,27 @@ class KnowledgeWarehouse:
         with open(os.path.join(kw_path, "config.json"), "w") as f:
             f.write(kw_serialized.model_dump_json())
         return kw_path
+
+    async def delete(self) -> None:
+        """Delete the entire knowledge warehouse including all files and vectors."""
+        try:
+            # Delete the storage directory if it exists
+            if self.storage and self.storage.get_directory_path():
+                storage_root = self.storage.get_directory_path()
+                kw_storage_file_path = os.path.join(storage_root, str(self.kw_id))
+                if os.path.exists(kw_storage_file_path):
+                    shutil.rmtree(kw_storage_file_path)
+
+            # Delete vector store if it exists
+            self.vector_db.vector_db.delete(self.vector_db.get_all_ids())
+
+            # Delete all files under self.kw_path
+            if os.path.exists(self.kw_path):
+                shutil.rmtree(self.kw_path)
+
+        except Exception as e:
+            logger.error(f"Error deleting knowledge warehouse: {self.name} {str(e)}")
+            raise e
 
     def info(self) -> KnowledgeWarehouseInfo:
         # TODO: embedding
@@ -310,30 +333,15 @@ class KnowledgeWarehouse:
         if embedder is None:
             embedder = EmbedderBuilder.build_default_embedder()
 
-        processor_kwargs = processor_kwargs or {}
-
         kw_id = uuid4()
 
-        for path in file_paths:
-            file = await load_aifile(kw_id, path)
-            await storage.upload_file(file)
-
-        logger.debug(f"uploaded all files to {storage}")
-
-        # Parse files
-        docs = await process_files(
-            storage=storage,
-            skip_file_error=skip_file_error,
-            **processor_kwargs,
-        )
-
-        # Building KnowledgeWarehouse's vectordb
-        if vector_db is None:
-            vector_db = await VectordbBuilder.build_default_vectordb(docs, embedder.embedder)
-        else:
-            await vector_db.vector_db.aadd_documents(docs)
-
-        logger.debug(f"added {len(docs)} chunks to vectordb")
+        # Add files to storage and vector db
+        vector_db = await cls._add_file_to_storage_and_vectordb(kw_id=kw_id,
+                                                                file_paths=file_paths,
+                                                                storage=storage,
+                                                                embedder=embedder,
+                                                                skip_file_error=skip_file_error,
+                                                                processor_kwargs=processor_kwargs)
 
         return cls(
             kw_id=kw_id,
@@ -533,7 +541,69 @@ class KnowledgeWarehouse:
             )
         )
 
-    def add_file(self, file_path: str) -> None:
-        # TODO add it to storage
-        # TODO add it to vectorstore
-        pass
+    @classmethod
+    async def _add_file_to_storage_and_vectordb(cls,
+                                                kw_id: UUID,
+                                                file_paths: list[str | Path],
+                                                storage: StorageBase,
+                                                vector_db: VectordbBase | None = None,
+                                                embedder: EmbedderBase | None = None,
+                                                skip_file_error: bool = False,
+                                                processor_kwargs: dict[str, Any] | None = None,) -> VectordbBase | None:
+
+        processor_kwargs = processor_kwargs or {}
+
+        for path in file_paths:
+            file = await load_aifile(kw_id, path)
+            await storage.upload_file(file)
+
+            logger.debug(f"uploaded {file} to {storage}")
+
+            try:
+                # Parse files
+                docs = await process_file(
+                    file=file,
+                    **processor_kwargs,
+                )
+            except Exception as e:
+                if skip_file_error:
+                    logger.warning(f"error processing {file}: {e}")
+                    continue
+                else:
+                    raise e
+
+            # Building KnowledgeWarehouse's vectordb
+            if vector_db is None:
+                vector_db = await VectordbBuilder.build_default_vectordb(docs, embedder.embedder)
+                ids = vector_db.get_all_ids()
+            else:
+                ids = await vector_db.vector_db.aadd_documents(docs)
+
+            file.vectordb_ids = ids
+
+            logger.debug(f"added {len(docs)} chunks to vectordb")
+
+        return vector_db
+
+    async def aadd_files(self,
+                        file_paths: list[str | Path],
+                        skip_file_error: bool = False,
+                        processor_kwargs: dict[str, Any] | None = None,) -> None:
+        await self._add_file_to_storage_and_vectordb(
+            kw_id=self.kw_id,
+            file_paths=file_paths,
+            storage=self.storage,
+            vector_db=self.vector_db,
+            embedder=self.embedder,
+            skip_file_error=skip_file_error,
+            processor_kwargs=processor_kwargs,
+        )
+
+    async def delete_file(self, file: AIFile) -> None:
+        # Remove file from storage
+        await self.storage.remove_file(file.file_id)
+        logger.debug(f"removed file {file.original_filename} from {self.name}'s storage")
+
+        # Remove file from vector db
+        self.vector_db.vector_db.delete(file.vectordb_ids)
+        logger.debug(f"removed file {file.original_filename} from {self.name}'s vector db")

@@ -1,3 +1,12 @@
+import streamlit as st
+
+st.set_page_config(
+    page_title="Aeon Intelligence",
+    page_icon="🧊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 import asyncio
 import nest_asyncio
 from uuid import uuid4
@@ -6,8 +15,10 @@ from dotenv import load_dotenv
 import sys
 import os
 
+from frontend.authentication import initialize_auth_state
 from frontend.authentication import get_user_specific_key
 from frontend.knowledge_warehouse_admin import render_knowledge_warehouse_admin
+from frontend.login import render_login_page
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from core.ai_core.rag.entities.models import ParsedRAGResponse
@@ -15,7 +26,7 @@ from core.ai_core.knowledge_warehouse import KnowledgeWarehouse
 
 load_dotenv()
 
-import streamlit as st
+
 from streamlit_chat import message
 
 import pyperclip  # Add this import for clipboard functionality
@@ -23,12 +34,6 @@ import pyperclip  # Add this import for clipboard functionality
 ### import nest_asyncio ###
 nest_asyncio.apply()
 
-st.set_page_config(
-    page_title="Aeon Intelligence",
-    page_icon="🧊",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 # Add these imports
 from PIL import Image
 import requests
@@ -235,10 +240,48 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Add to your custom CSS section
+st.markdown("""
+<style>
+    /* Make dropdown more compact */
+    .stSelectbox {
+        max-width: auto;  /* Limit width */
+    }
+    
+    /* Reduce padding in dropdown */
+    .stSelectbox > div > div {
+        padding: 2px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<style>
+    /* Align submit button vertically */
+    .stButton {
+        margin-top: 25px;  /* Adjust this value to fine-tune vertical alignment */
+    }
+    
+    /* Make button same height as input */
+    .stButton > button {
+        height: 38px;  /* Match Streamlit's default input height */
+        margin-top: 0;
+        padding-top: 3px;
+        padding-bottom: 3px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
 def main():
-    # TODO Assuming you have the user_id from login
-    user_id = "chin-hiro@aeonpeople.biz"  # Replace with actual user ID from your login system
-    st.session_state.login_user_id = user_id
+
+    initialize_auth_state()
+    
+    if not st.session_state.authenticated:
+        render_login_page()
+        return
+    
+    user_id = st.session_state.login_user_id
 
     if "needs_rerun" in st.session_state and st.session_state.needs_rerun:
         st.session_state.needs_rerun = False
@@ -254,6 +297,22 @@ def main():
     feedback_counts_key = get_user_specific_key("feedback_counts", user_id)
     knowledge_warehouses_key = get_user_specific_key("knowledge_warehouses", user_id)
     selected_knowledge_warehouse_key = get_user_specific_key("selected_knowledge_warehouse", user_id)
+
+    def on_knowledge_warehouse_change():
+        # Clear chat history when switching knowledge warehouse
+        st.session_state[chat_answers_history_key] = []
+        st.session_state[user_prompt_history_key] = []
+        st.session_state[chat_history_key] = []
+        st.session_state[feedback_given_key] = {}
+
+        # clear chat history in selected knowledge warehouse
+        st.session_state[selected_knowledge_warehouse_key].default_chat = []
+        
+        # Update selected knowledge warehouse
+        kw_options = {kw.name: kw for kw in st.session_state[knowledge_warehouses_key].values()}
+        selected_kw_name = st.session_state.kw_selector
+        kw = kw_options[selected_kw_name]
+        st.session_state[selected_knowledge_warehouse_key] = kw
 
     def ask(question) -> ParsedRAGResponse:
         try:
@@ -291,8 +350,8 @@ def main():
         st.title("User Profile")
 
         # You can replace these with actual user data
-        user_name = "Chin Hiroshi"
-        user_email = "chin-hiro@aeonpeople.biz"
+        user_name = user_id.split("@")[0]
+        user_email = user_id
 
         profile_pic = get_profile_picture(user_email)
         st.image(profile_pic, width=150)
@@ -322,20 +381,32 @@ def main():
             page = "Knowledge Warehouse"
             st.rerun()
 
-        # show the latest knowledge warehouse of login user
-        if st.session_state[selected_knowledge_warehouse_key] is None:
-            st.session_state[selected_knowledge_warehouse_key] = list(st.session_state[knowledge_warehouses_key].values())[-1]
-        else:
-            kw = st.session_state[selected_knowledge_warehouse_key]
-
         st.header("Aeon Intelligence📚🔗 知識倉庫")
 
         # Fixed input container at bottom
         st.markdown('<div class="input-container">', unsafe_allow_html=True)
-        col1, col2 = st.columns([2, 1])
+        col1, col2, col3 = st.columns([3, 1, 1])
         with col1:
-            prompt = st.text_input("Prompt", placeholder="Enter your message here...")
+            prompt = st.text_input("質問", placeholder="Enter your message here...")
         with col2:
+            # Add dropdown for knowledge warehouse selection
+            kw_options = {kw.name: kw for kw in st.session_state[knowledge_warehouses_key].values()}
+            # Use the stored value as index if it exists
+            index = list(kw_options.keys()).index(st.session_state[selected_knowledge_warehouse_key].name) \
+                if st.session_state[selected_knowledge_warehouse_key] and st.session_state[selected_knowledge_warehouse_key].name in kw_options else 0
+            selected_kw_name = st.selectbox(
+                "知識倉庫",
+                options=list(kw_options.keys()),
+                key="kw_selector",
+                index=index,
+                on_change=on_knowledge_warehouse_change
+            )
+            
+            # Update selected knowledge warehouse
+            kw = kw_options[selected_kw_name]
+            st.session_state[selected_knowledge_warehouse_key] = kw
+        with col3:
+            # Add vertical centering for submit button
             if st.button("Submit", key="submit"):
                 prompt = prompt or "Hello"
                 if prompt:
@@ -384,6 +455,7 @@ def main():
         # Add a footer
         st.markdown("---")
         st.markdown("Powered by LangChain and Streamlit")
+        st.markdown("Copyright © 2024 AEON CO., LTD. All rights reserved.")
 
     elif page == "Knowledge Warehouse":
         render_knowledge_warehouse_admin()

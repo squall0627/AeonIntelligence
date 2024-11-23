@@ -1,7 +1,7 @@
 import logging
 
 from abc import ABC, abstractmethod
-from typing import Self
+from typing import Self, List
 
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
@@ -15,7 +15,7 @@ logger = logging.getLogger("ai_core")
 class VectordbBase(ABC):
     supported_vectordb: list[VectordbType]
     vector_db: VectorStore | None
-    docs: list[Document] | None
+    # docs: list[Document] | None
     embedder: Embeddings | None
 
     def __init__(self, vectordb_type: VectordbType) -> None:
@@ -31,7 +31,7 @@ class VectordbBase(ABC):
             raise ValueError("Can't initialize knowledge warehouse without documents")
         if embedder is None:
             raise ValueError("Can't initialize knowledge warehouse without an embedder")
-        self.docs = docs
+        # self.docs = docs
         self.embedder = embedder
         self.vector_db = await self.build_impl(docs, embedder)
         return self
@@ -51,8 +51,8 @@ class VectordbBase(ABC):
 
     def load(self, config: VectordbConfig, embedder: Embeddings) -> Self:
         logger.debug(f"Loading vectordb {self.vectordb_type} from {config.vectordb_folder_path}")
-        # TODO Can not get the docs in deserialization
-        # self.docs = docs
+        # get docs from vector db
+        # self.docs = self.vector_db.get_by_ids(config.docs_ids)
         self.embedder = embedder
         self.vector_db = self.load_impl(config, embedder)
         return self
@@ -60,3 +60,9 @@ class VectordbBase(ABC):
     @abstractmethod
     def load_impl(self, config: VectordbConfig, embedder: Embeddings) -> VectorStore:
         raise NotImplementedError
+
+    def get_all_ids(self) -> List[str]:
+        """Get all document IDs from the vector store."""
+        if hasattr(self.vector_db, 'docstore'):
+            return list(self.vector_db.docstore._dict.keys())
+        return []
