@@ -63,7 +63,8 @@ def _define_custom_prompts() -> CustomPromptsDict:
     system_message_template += (
         "- When answering use markdown. Use markdown code blocks for code snippets.\n"
         "- Answer in a concise and clear manner.\n"
-        "- If no preferred language is provided, answer in the same language as the language used by the user.\n"
+        # "- If no preferred language is provided, you MUST ONLY answer in the same language as the language used by the user.\n"
+        "- you MUST ONLY answer in Japanese.\n"
         "- You must use ONLY the provided context to answer the question. "
         "Do not use any prior knowledge or external information, even if you are certain of the answer.\n"
         "- If you cannot provide an answer using ONLY the context provided, do not attempt to answer from your own knowledge."
@@ -77,6 +78,7 @@ def _define_custom_prompts() -> CustomPromptsDict:
         "- You have access to the following internal reasoning to provide an answer: {reasoning}\n"
         "- You have access to the following files to answer the user question (limited to first 20 files): {files}\n"
         "- You have access to the following context to answer the user question: {context}\n"
+        # "- If the context is in a different language than the {question}, you MUST translate the context into the same language as the {question}.\n"
         "- Follow these user instruction when crafting the answer: {custom_instructions}\n"
         "- These user instructions shall take priority over any other previous instruction.\n"
         "- Remember: if you cannot provide an answer using ONLY the provided context and CITING the sources, "
