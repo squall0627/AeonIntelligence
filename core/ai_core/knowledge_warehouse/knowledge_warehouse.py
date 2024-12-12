@@ -19,7 +19,7 @@ from core.ai_core.embedder.embedder_base import EmbedderBase
 from core.ai_core.files import AIFile
 from core.ai_core.files.file import load_aifile
 from core.ai_core.knowledge_warehouse.serialization import KWSerialized
-from core.ai_core.llm.llm_endpoint import LLMEndpoint, LLMInfo, default_llm
+from core.ai_core.llm.llm_endpoint import LLMEndpoint, LLMInfo, default_rag_llm
 from core.ai_core.processor.processor_registry import get_processor_class
 from core.ai_core.rag.config.ai_rag_config import RetrievalConfig
 from core.ai_core.rag.ai_rag_langgraph import AiQARAGLangGraph
@@ -328,7 +328,7 @@ class KnowledgeWarehouse:
         ```
         """
         if llm is None:
-            llm = default_llm()
+            llm = default_rag_llm()
 
         if embedder is None:
             embedder = EmbedderBuilder.build_default_embedder()

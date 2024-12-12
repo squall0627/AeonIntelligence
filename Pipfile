@@ -25,6 +25,7 @@ docx2txt = "*"
 unstructured = "*"
 "pdfminer.six" = "*"
 pillow-heif = "*"
+flask = "*"
 
 [dev-packages]
 

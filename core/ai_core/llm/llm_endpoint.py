@@ -140,7 +140,7 @@ class LLMEndpoint:
     def llm(self):
         return self._llm
 
-def default_llm() -> LLMEndpoint:
+def default_rag_llm() -> LLMEndpoint:
     try:
         logger.debug(f"Loaded {DEFAULT_LLM_NAME} as default LLM for knowledge warehouse")
         llm = LLMEndpoint.from_config(

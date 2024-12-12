@@ -37,6 +37,9 @@ class LLMName(str, Enum):
     mistral_nemo = "mistral-nemo"
     mistral_7b = "mistral"
     codestral = "codestral"
+    qwen_32b = "qwen:32b"
+    qwq = "qwq"
+
 
 DEFAULT_LLM_NAME = LLMName.mistral_small
 
@@ -46,6 +49,7 @@ class DefaultModelSuppliers(str, Enum):
     ANTHROPIC = "anthropic"
     META = "meta"
     MISTRAL = "mistral"
+    ALIBABA = "alibaba"
 
 class LLMConfig(AIBaseConfig):
     context: int | None = None
@@ -128,6 +132,14 @@ class LLMModelConfig:
             ),
             LLMName.codestral: LLMConfig(
                 context=32000, tokenizer_hub="Xenova/mistral-tokenizer-v3"
+            ),
+        },
+        DefaultModelSuppliers.ALIBABA: {
+            LLMName.qwq: LLMConfig(
+                context=32000, tokenizer_hub=""
+            ),
+            LLMName.qwen_32b: LLMConfig(
+                context=32000, tokenizer_hub=""
             ),
         },
     }
