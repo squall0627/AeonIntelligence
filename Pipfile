@@ -26,6 +26,7 @@ unstructured = "*"
 "pdfminer.six" = "*"
 pillow-heif = "*"
 flask = "*"
+gunicorn = "*"
 
 [dev-packages]
 

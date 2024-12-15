@@ -1,11 +1,10 @@
-import logging
-
 from core.ai_core.llm import LLMEndpoint
 from core.ai_core.llm.llm_config import LLMEndpointConfig, DefaultModelSuppliers, LLMName
 from core.ai_core.translation.language import Language
 from core.ai_core.translation.prompts import translation_prompts
+from core.utils.log_handler import rotating_file_logger
 
-logger = logging.getLogger("ai_core")
+logger = rotating_file_logger("ai_core")
 
 def default_translate_llm() -> LLMEndpoint:
     try:
@@ -28,6 +27,8 @@ class Translator:
         self.target_language = target_language.value if isinstance(target_language, Language) else target_language
         self.keywords_map = keywords_map if keywords_map else {}
         self.llm = llm if llm else default_translate_llm()
+        logger.debug(f"Translator initialized with source_language: {self.source_language}, "
+                     f"target_language: {self.target_language}, keywords_map: {self.keywords_map}, llm: {self.llm}")
 
     def translate(self, input_text: str) -> str:
         # if input_text is empty, return empty string
@@ -42,8 +43,10 @@ class Translator:
             instruction=f"Translate {self.source_language} to {self.target_language}.",
             input_text=input_text,
         )
+        logger.debug(f"Message: {msg}")
 
         # Invoke the model
         response = self.llm.llm.invoke(msg)
+        logger.debug(f"Response: {response}")
 
         return response.content
