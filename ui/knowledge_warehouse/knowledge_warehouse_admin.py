@@ -7,7 +7,7 @@ import nest_asyncio
 
 from typing import List
 
-from frontend.authentication import get_user_specific_key
+from ui.authentication import knowledge_warehouses_key, selected_knowledge_warehouse_key
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.ai_core.knowledge_warehouse.knowledge_warehouse import KnowledgeWarehouse
@@ -20,6 +20,29 @@ load_dotenv()
 
 ### import nest_asyncio ###
 nest_asyncio.apply()
+
+
+def render_style():
+    st.markdown(
+        """
+        <style>
+            /* Style download buttons to look like links */
+            .stDownloadButton > button {
+                background: none!important;
+                border: none;
+                padding: 0!important;
+                color: #4a90e2;
+                text-decoration: underline;
+                cursor: pointer;
+                text-align: left;
+            }
+            .stDownloadButton > button:hover {
+                color: #357abd;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def upload_to_temp_dir(files) -> List[str]:
@@ -99,15 +122,8 @@ def create_knowledge_warehouse(name: str, files, storage_path: str):
         # Save knowledge warehouse
         save_knowledge_warehouse(kw)
 
-        knowledge_warehouses_key = get_user_specific_key(
-            "knowledge_warehouses", st.session_state.login_user_id
-        )
-        selected_knowledge_warehouse_key = get_user_specific_key(
-            "selected_knowledge_warehouse", st.session_state.login_user_id
-        )
-
-        st.session_state[knowledge_warehouses_key][kw.kw_id] = kw
-        st.session_state[selected_knowledge_warehouse_key] = kw
+        st.session_state[knowledge_warehouses_key()][kw.kw_id] = kw
+        st.session_state[selected_knowledge_warehouse_key()] = kw
 
         return True
     except Exception as e:
@@ -175,18 +191,11 @@ async def delete_knowledge_warehouse(kw: KnowledgeWarehouse) -> bool:
         # Delete the knowledge warehouse
         loop.run_until_complete(kw.delete())
 
-        knowledge_warehouses_key = get_user_specific_key(
-            "knowledge_warehouses", st.session_state.login_user_id
-        )
-        selected_knowledge_warehouse_key = get_user_specific_key(
-            "selected_knowledge_warehouse", st.session_state.login_user_id
-        )
-
         # Remove from session state
-        if knowledge_warehouses_key in st.session_state:
-            del st.session_state[knowledge_warehouses_key][kw.kw_id]
-        if st.session_state[selected_knowledge_warehouse_key].kw_id == kw.kw_id:
-            st.session_state[selected_knowledge_warehouse_key] = None
+        if knowledge_warehouses_key() in st.session_state:
+            del st.session_state[knowledge_warehouses_key()][kw.kw_id]
+        if st.session_state[selected_knowledge_warehouse_key()].kw_id == kw.kw_id:
+            st.session_state[selected_knowledge_warehouse_key()] = None
 
         return True
     except Exception as e:
@@ -195,6 +204,8 @@ async def delete_knowledge_warehouse(kw: KnowledgeWarehouse) -> bool:
 
 
 def render_knowledge_warehouse_admin():
+    render_style()
+
     st.title("Knowledge Warehouse Administration")
 
     # Create new knowledge warehouse section
@@ -222,11 +233,8 @@ def render_knowledge_warehouse_admin():
     # Display existing knowledge warehouses
     st.header("Existing Knowledge Warehouses")
 
-    knowledge_warehouses_key = get_user_specific_key(
-        "knowledge_warehouses", st.session_state.login_user_id
-    )
-    if knowledge_warehouses_key in st.session_state:
-        for kw in st.session_state[knowledge_warehouses_key].values():
+    if knowledge_warehouses_key() in st.session_state:
+        for kw in st.session_state[knowledge_warehouses_key()].values():
             with st.expander(f"📚 {kw.name}"):
                 # Add file upload section
                 uploaded_files = st.file_uploader(
@@ -296,28 +304,3 @@ def render_knowledge_warehouse_admin():
                             st.rerun()
     else:
         st.write("No knowledge warehouses found")
-
-    st.markdown(
-        """
-    <style>
-        /* Style download buttons to look like links */
-        .stDownloadButton > button {
-            background: none!important;
-            border: none;
-            padding: 0!important;
-            color: #4a90e2;
-            text-decoration: underline;
-            cursor: pointer;
-            text-align: left;
-        }
-        .stDownloadButton > button:hover {
-            color: #357abd;
-        }
-    </style>
-    """,
-        unsafe_allow_html=True,
-    )
-
-
-# if __name__ == "__main__":
-#     render_knowledge_warehouse_admin()
