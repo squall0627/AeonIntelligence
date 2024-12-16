@@ -1,6 +1,6 @@
 # gunicorn_config_api.py
 bind = "0.0.0.0:5002"
-workers = 2
+workers = 4
 
 # Logging configuration
 accesslog = (

@@ -1,6 +1,6 @@
 # Run the app on gunicorn
 pipenv run gunicorn -c gunicorn_config_api.py api.translator_app:translator_app
-pipenv run gunicorn -c gunicorn_config_ui.py streamlit_wrapper:app
+pipenv run streamlit run app.py
 
 
 # Run the gunicorn as daemon

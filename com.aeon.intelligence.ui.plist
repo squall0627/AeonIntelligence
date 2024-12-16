@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.aeon.intelligence.ui</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/squall/.local/share/virtualenvs/AeonIntelligence-FPzeDT1W/bin/streamlit</string>
+		<string>run</string>
+		<string>app.py</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/squall/PycharmProjects/AeonIntelligence</string>
+	<key>StandardOutPath</key>
+	<string>/Users/squall/Logs/AeonIntelligence/ui/streamlit.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/squall/Logs/AeonIntelligence/ui/streamlit_error.log</string>
+	<key>KeepAlive</key>
+	<true/>
+	<key>RunAtLoad</key>
+	<true/>
+</dict>
+</plist>
