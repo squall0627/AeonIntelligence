@@ -12,7 +12,11 @@ from core.ai_core.llm import LLMEndpoint
 from core.ai_core.llm_tools.cited_answer_tool import CitedAnswerToolsList
 from core.ai_core.rag.config.ai_rag_config import RetrievalConfig
 from core.ai_core.rag.entities.chat import ChatHistory
-from core.ai_core.rag.entities.models import AIKnowledge, ParsedRAGChunkResponse, RAGResponseMetadata
+from core.ai_core.rag.entities.models import (
+    AIKnowledge,
+    ParsedRAGChunkResponse,
+    RAGResponseMetadata,
+)
 from typing import (
     Any,
     AsyncGenerator,
@@ -25,13 +29,14 @@ from core.ai_core.rag.node_functions.node_functions_factory import NodeFunctions
 
 logger = logging.getLogger("ai_core")
 
+
 class AiQARAGLangGraph:
     def __init__(
-            self,
-            *,
-            retrieval_config: RetrievalConfig,
-            llm: LLMEndpoint,
-            vector_store: VectorStore | None = None,
+        self,
+        *,
+        retrieval_config: RetrievalConfig,
+        llm: LLMEndpoint,
+        vector_store: VectorStore | None = None,
     ):
         self.retrieval_config = retrieval_config
         self.vector_store = vector_store
@@ -41,11 +46,11 @@ class AiQARAGLangGraph:
         self.final_nodes = []
 
     async def answer_astream(
-            self,
-            question: str,
-            history: ChatHistory,
-            list_files: list[AIKnowledge],
-            metadata=None,
+        self,
+        question: str,
+        history: ChatHistory,
+        list_files: list[AIKnowledge],
+        metadata=None,
     ) -> AsyncGenerator[ParsedRAGChunkResponse, ParsedRAGChunkResponse]:
 
         if metadata is None:
@@ -61,24 +66,26 @@ class AiQARAGLangGraph:
         previous_content = ""
 
         async for event in conversational_qa_chain.astream_events(
-                {
-                    "messages": [("user", question)],
-                    "chat_history": history,
-                    "files": concat_list_files,
-                },
-                version="v1",
-                config={"metadata": metadata},
+            {
+                "messages": [("user", question)],
+                "chat_history": history,
+                "files": concat_list_files,
+            },
+            version="v1",
+            config={"metadata": metadata},
         ):
             if self._is_final_node_with_docs(event):
                 docs = event["data"]["output"]["docs"]
 
             if self._is_final_node_and_chat_model_stream(event):
                 chunk = event["data"]["chunk"]
-                rolling_message, new_content, previous_content = self._parse_chunk_response(
-                    rolling_message,
-                    chunk,
-                    self.llm_endpoint.supports_func_calling(),
-                    previous_content,
+                rolling_message, new_content, previous_content = (
+                    self._parse_chunk_response(
+                        rolling_message,
+                        chunk,
+                        self.llm_endpoint.supports_func_calling(),
+                        previous_content,
+                    )
                 )
 
                 if new_content:
@@ -109,10 +116,15 @@ class AiQARAGLangGraph:
         # Add nodes to the workflow
         for node in self.retrieval_config.workflow_config.nodes:
             if node.name not in [START, END]:
-                workflow.add_node(node.name, NodeFunctionsFactory.get_node_function(node.name,
-                                                                                    retrieval_config=self.retrieval_config,
-                                                                                    llm=self.llm_endpoint,
-                                                                                    vector_store=self.vector_store))
+                workflow.add_node(
+                    node.name,
+                    NodeFunctionsFactory.get_node_function(
+                        node.name,
+                        retrieval_config=self.retrieval_config,
+                        llm=self.llm_endpoint,
+                        vector_store=self.vector_store,
+                    ),
+                )
 
         # Add edges to the workflow
         for node in self.retrieval_config.workflow_config.nodes:
@@ -122,35 +134,41 @@ class AiQARAGLangGraph:
                     if edge == END:
                         self.final_nodes.append(node.name)
             elif node.conditional_edge:
-                routing_function = NodeFunctionsFactory.get_node_function(node.conditional_edge.routing_function,
-                                                                          retrieval_config=self.retrieval_config,
-                                                                          llm=self.llm_endpoint,
-                                                                          vector_store=self.vector_store)
+                routing_function = NodeFunctionsFactory.get_node_function(
+                    node.conditional_edge.routing_function,
+                    retrieval_config=self.retrieval_config,
+                    llm=self.llm_endpoint,
+                    vector_store=self.vector_store,
+                )
                 workflow.add_conditional_edges(
                     node.name, routing_function, node.conditional_edge.conditions
                 )
                 if END in node.conditional_edge.conditions:
                     self.final_nodes.append(node.name)
             else:
-                raise ValueError("Node should have at least one edge or conditional_edge")
+                raise ValueError(
+                    "Node should have at least one edge or conditional_edge"
+                )
 
     def _is_final_node_with_docs(self, event: dict) -> bool:
         return (
-                "output" in event["data"]
-                and event["data"]["output"] is not None
-                and "docs" in event["data"]["output"]
-                and event["metadata"]["langgraph_node"] in self.final_nodes
+            "output" in event["data"]
+            and event["data"]["output"] is not None
+            and "docs" in event["data"]["output"]
+            and event["metadata"]["langgraph_node"] in self.final_nodes
         )
 
     def _is_final_node_and_chat_model_stream(self, event: dict) -> bool:
         return (
-                event["event"] == "on_chat_model_stream"
-                and "langgraph_node" in event["metadata"]
-                and event["metadata"]["langgraph_node"] in self.final_nodes
+            event["event"] == "on_chat_model_stream"
+            and "langgraph_node" in event["metadata"]
+            and event["metadata"]["langgraph_node"] in self.final_nodes
         )
 
     @classmethod
-    def _format_file_list(cls, list_files_array: list[AIKnowledge], max_files: int = 20) -> str:
+    def _format_file_list(
+        cls, list_files_array: list[AIKnowledge], max_files: int = 20
+    ) -> str:
         list_files = [file.file_name or file.url for file in list_files_array]
         files: list[str] = list(filter(lambda n: n is not None, list_files))
         files = files[:max_files]
@@ -160,11 +178,11 @@ class AiQARAGLangGraph:
 
     @classmethod
     def _parse_chunk_response(
-            cls,
-            rolling_msg: AIMessageChunk,
-            raw_chunk: AIMessageChunk,
-            supports_func_calling: bool,
-            previous_content: str = "",
+        cls,
+        rolling_msg: AIMessageChunk,
+        raw_chunk: AIMessageChunk,
+        supports_func_calling: bool,
+        previous_content: str = "",
     ) -> Tuple[AIMessageChunk, str, str]:
 
         rolling_msg += raw_chunk
@@ -184,13 +202,16 @@ class AiQARAGLangGraph:
     def _get_answers_from_tool_calls(cls, tool_calls):
         answers = []
         for tool_call in tool_calls:
-            if tool_call.get("name") == CitedAnswerToolsList.SIMPLE_CITED_ANSWER.value and "args" in tool_call:
+            if (
+                tool_call.get("name") == CitedAnswerToolsList.SIMPLE_CITED_ANSWER.value
+                and "args" in tool_call
+            ):
                 answers.append(tool_call["args"].get("answer", ""))
         return answers
 
     @classmethod
-    def _get_chunk_metadata(cls,
-            msg: AIMessageChunk, sources: list[Any] | None = None
+    def _get_chunk_metadata(
+        cls, msg: AIMessageChunk, sources: list[Any] | None = None
     ) -> RAGResponseMetadata:
         metadata = {"sources": sources or []}
 
@@ -201,7 +222,10 @@ class AiQARAGLangGraph:
         all_followup_questions = []
 
         for tool_call in msg.tool_calls:
-            if tool_call.get("name") == CitedAnswerToolsList.SIMPLE_CITED_ANSWER.value and "args" in tool_call:
+            if (
+                tool_call.get("name") == CitedAnswerToolsList.SIMPLE_CITED_ANSWER.value
+                and "args" in tool_call
+            ):
                 args = tool_call["args"]
                 all_citations.extend(args.get("citations", []))
                 all_followup_questions.extend(args.get("followup_questions", []))

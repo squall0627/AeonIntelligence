@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def rotating_file_logger(app_name: str, max_bytes=1024*1024*10, backup_count=1):
+
+def rotating_file_logger(app_name: str, max_bytes=1024 * 1024 * 10, backup_count=1):
     """
     Rotating file logger
     """
@@ -31,10 +32,14 @@ def rotating_file_logger(app_name: str, max_bytes=1024*1024*10, backup_count=1):
     log_file = os.path.join(log_dir, f"{app_name}.log")
 
     # Create a file handler with a maximum file size of 10MB and 5 backup files
-    file_handler = RotatingFileHandler(log_file, maxBytes=max_bytes, backupCount=backup_count)
+    file_handler = RotatingFileHandler(
+        log_file, maxBytes=max_bytes, backupCount=backup_count
+    )
     file_handler.setLevel(log_level)
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     file_handler.setFormatter(formatter)
 
     # Add the handlers to the logger

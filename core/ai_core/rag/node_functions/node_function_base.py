@@ -17,6 +17,7 @@ from core.ai_core.rag.prompts import custom_prompts
 
 logger = logging.getLogger("ai_core")
 
+
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
     reasoning: List[str]
@@ -27,14 +28,15 @@ class AgentState(TypedDict):
     instructions: str
     tool: str
 
+
 class NodeFunctionBase(ABC):
 
     def __init__(
-            self,
-            *,
-            retrieval_config: RetrievalConfig,
-            llm: LLMEndpoint,
-            vector_store: VectorStore | None = None,
+        self,
+        *,
+        retrieval_config: RetrievalConfig,
+        llm: LLMEndpoint,
+        vector_store: VectorStore | None = None,
     ):
         self.retrieval_config = retrieval_config
         self.vector_store = vector_store
@@ -49,11 +51,11 @@ class NodeFunctionBase(ABC):
         raise NotImplementedError
 
     def reduce_rag_context(
-            self,
-            inputs: Dict[str, Any],
-            prompt: BasePromptTemplate,
-            docs: List[Document] | None = None,
-            max_context_tokens: int | None = None,
+        self,
+        inputs: Dict[str, Any],
+        prompt: BasePromptTemplate,
+        docs: List[Document] | None = None,
+        max_context_tokens: int | None = None,
     ) -> Tuple[Dict[str, Any], List[Document] | None]:
         max_iteration = 100
         security_factor = 0.85
@@ -98,17 +100,17 @@ class NodeFunctionBase(ABC):
         return inputs, docs
 
     def invoke_structured_output(
-            self, prompt: str, output_class: type[BaseModel]
+        self, prompt: str, output_class: type[BaseModel]
     ) -> Any:
         structured_llm = self.llm_endpoint.llm.with_structured_output(output_class)
         return structured_llm.invoke(prompt)
 
     @classmethod
     def combine_documents(
-            cls,
-            docs,
-            document_prompt=custom_prompts.DEFAULT_DOCUMENT_PROMPT,
-            document_separator="\n\n",
+        cls,
+        docs,
+        document_prompt=custom_prompts.DEFAULT_DOCUMENT_PROMPT,
+        document_separator="\n\n",
     ):
         # 各ドキュメントに対して、ソースを引用できるようにメタデータにインデックスを追加します。
         for doc, index in zip(docs, range(len(docs)), strict=False):
@@ -133,7 +135,7 @@ class NodeFunctionBase(ABC):
                 )
                 filtered_chunks.append(chunk)
             elif (
-                    chunk.metadata[config.relevance_score_key] >= relevance_score_threshold
+                chunk.metadata[config.relevance_score_key] >= relevance_score_threshold
             ):
                 filtered_chunks.append(chunk)
 
@@ -147,7 +149,7 @@ class NodeFunctionBase(ABC):
         return self.llm_endpoint.llm
 
     def build_rag_prompt_inputs(
-            self, state: AgentState, docs: List[Document] | None
+        self, state: AgentState, docs: List[Document] | None
     ) -> Dict[str, Any]:
         """
         RAG_ANSWER_PROMPT の入力辞書を構築します。
@@ -163,7 +165,9 @@ class NodeFunctionBase(ABC):
         user_question = messages[0].content
         files = state["files"]
         prompt = self.retrieval_config.prompt
-        available_tools, _ = self.retrieval_config.workflow_config.collect_tools_prompt()
+        available_tools, _ = (
+            self.retrieval_config.workflow_config.collect_tools_prompt()
+        )
 
         return {
             "context": self.combine_documents(docs) if docs else "None",

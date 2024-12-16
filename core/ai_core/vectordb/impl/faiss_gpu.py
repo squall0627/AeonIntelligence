@@ -12,11 +12,14 @@ from core.ai_core.vectordb.vectordb_builder import VectordbType
 
 logger = logging.getLogger("ai_core")
 
+
 class FaissGpu(VectordbBase):
     def __init__(self) -> None:
         super().__init__(VectordbType.FaissGPU)
 
-    async def build_impl(self,  docs: list[Document], embedder: Embeddings) -> VectorStore:
+    async def build_impl(
+        self, docs: list[Document], embedder: Embeddings
+    ) -> VectorStore:
         logger.debug(f"Using {VectordbType.FaissGPU} as vector store.")
         vector_db = await FAISS.afrom_documents(documents=docs, embedding=embedder)
         return vector_db
@@ -28,7 +31,9 @@ class FaissGpu(VectordbBase):
             self.vector_db.save_local(folder_path=vectordb_path)
             return FAISSConfig(vectordb_folder_path=vectordb_path)
         else:
-            raise Exception(f"Can't serialize other vector stores {self.vector_db} for now")
+            raise Exception(
+                f"Can't serialize other vector stores {self.vector_db} for now"
+            )
 
     def load_impl(self, config: VectordbConfig, embedder: Embeddings) -> VectorStore:
         vector_db = FAISS.load_local(

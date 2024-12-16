@@ -6,7 +6,10 @@ from pydantic import BaseModel, Field
 
 from core.ai_core.llm import LLMEndpoint
 from core.ai_core.rag.config.ai_rag_config import RetrievalConfig
-from core.ai_core.rag.node_functions.node_function_base import NodeFunctionBase, AgentState
+from core.ai_core.rag.node_functions.node_function_base import (
+    NodeFunctionBase,
+    AgentState,
+)
 from core.ai_core.rag.prompts import custom_prompts
 
 
@@ -31,15 +34,20 @@ class SplitInput(BaseModel):
         description="The list of standalone, self-contained tasks or questions.",
     )
 
-class RoutingSplit(NodeFunctionBase):
-    name="routing_split"
-    is_async=False
 
-    def __init__(self,
-                 retrieval_config: RetrievalConfig,
-                 llm: LLMEndpoint,
-                 vector_store: VectorStore | None = None,):
-        super().__init__(retrieval_config=retrieval_config, llm=llm, vector_store=vector_store)
+class RoutingSplit(NodeFunctionBase):
+    name = "routing_split"
+    is_async = False
+
+    def __init__(
+        self,
+        retrieval_config: RetrievalConfig,
+        llm: LLMEndpoint,
+        vector_store: VectorStore | None = None,
+    ):
+        super().__init__(
+            retrieval_config=retrieval_config, llm=llm, vector_store=vector_store
+        )
 
     def run(self, state: AgentState) -> List[Send]:
         response = self.invoke_structured_output(
@@ -60,7 +68,9 @@ class RoutingSplit(NodeFunctionBase):
 
         print(f"############## The instructions are: {instructions}")
         if instructions:
-            print(f"############## Will run edit_system_prompt with instructions: {instructions} and tasks: {tasks}")
+            print(
+                f"############## Will run edit_system_prompt with instructions: {instructions} and tasks: {tasks}"
+            )
             return [
                 Send(
                     "edit_system_prompt",

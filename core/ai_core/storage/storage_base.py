@@ -18,6 +18,7 @@ class StorageInfo:
         files_tree.add(f"Number of Files: [bold]{self.n_files}[/bold]")
         files_tree.add(f"Directory Path: [italic]{self.directory_path}[/italic]")
 
+
 class StorageBase(ABC):
     """
     ストレージシステムの抽象基底クラス。すべてのサブクラスは、特定のプロパティを定義し、ファイル管理のための特定のメソッドを実装する必要があります。

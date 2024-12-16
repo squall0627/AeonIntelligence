@@ -17,6 +17,7 @@ class ChatMessage(BaseModel):
     message_time: datetime
     metadata: dict[str, Any]
 
+
 class ChatHistory:
     """
     ChatHistory はチャットの会話履歴を記録するクラスです。
@@ -56,9 +57,7 @@ class ChatHistory:
     def __len__(self):
         return len(self._msgs)
 
-    def append(
-            self, langchain_msg: AIMessage | HumanMessage, metadata=None
-    ):
+    def append(self, langchain_msg: AIMessage | HumanMessage, metadata=None):
         """
         新しいメッセージをチャット履歴に追加します。
 
@@ -108,6 +107,7 @@ class ChatHistory:
         """
 
         return [_msg.msg for _msg in self._msgs]
+
 
 @dataclass
 class ChatHistoryInfo:

@@ -7,6 +7,7 @@ from core.ai_core.rag.ai_rag_workflow import DefaultWorkflow
 from core.ai_core.rag.config.langgraph_config import WorkflowConfig
 from core.ai_core.utils.utils import normalize_to_env_variable_name
 
+
 class DefaultRerankers(str, Enum):
     COHERE = "cohere"
     JINA = "jina"
@@ -17,6 +18,7 @@ class DefaultRerankers(str, Enum):
             self.COHERE: "rerank-multilingual-v3.0",
             self.JINA: "jina-reranker-v2-base-multilingual",
         }[self]
+
 
 class RerankerConfig(AIBaseConfig):
     supplier: DefaultRerankers | None = None
@@ -44,6 +46,7 @@ class RerankerConfig(AIBaseConfig):
                     f"Please set the environment variable: {api_key_var}"
                 )
 
+
 class RetrievalConfig(AIBaseConfig):
     reranker_config: RerankerConfig = RerankerConfig()
     llm_config: LLMEndpointConfig = LLMEndpointConfig()
@@ -56,4 +59,3 @@ class RetrievalConfig(AIBaseConfig):
     def __init__(self, **data):
         super().__init__(**data)
         self.llm_config.set_api_key(force_reset=False)
-

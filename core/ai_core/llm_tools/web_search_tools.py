@@ -56,12 +56,15 @@ def create_tavily_tool(config: Dict[str, Any]) -> ToolWrapper:
 
     return ToolWrapper(tool, format_input, format_output)
 
+
 # Initialize the registry and register tools
 web_search_tool_registry = ToolRegistry()
 web_search_tool_registry.register_tool(WebSearchToolsList.TAVILY, create_tavily_tool)
 
+
 def create_web_search_tool(tool_name: str, config: Dict[str, Any]) -> ToolWrapper:
     return web_search_tool_registry.create_tool(tool_name, config)
+
 
 WebSearchTools = ToolsCategory(
     name="Web Search",

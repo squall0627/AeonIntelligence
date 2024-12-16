@@ -35,6 +35,7 @@ known_processors: ProcMapping = {
     FileExtension.ipynb: "core.ai_core.processor.impl.default_processor.NotebookProcessor",
 }
 
+
 def get_processor_class(file_extension: FileExtension | str) -> Type[ProcessorBase]:
     if file_extension not in registry:
         if file_extension not in known_processors:
@@ -52,6 +53,7 @@ def get_processor_class(file_extension: FileExtension | str) -> Type[ProcessorBa
 
     cls = registry[file_extension]
     return cls
+
 
 def _import_class(full_mod_path: str):
     if ":" in full_mod_path:

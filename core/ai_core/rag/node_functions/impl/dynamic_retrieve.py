@@ -11,20 +11,28 @@ from core.ai_core.llm import LLMEndpoint
 from core.ai_core.rag.ai_rag_reranker import AIRagReranker
 from core.ai_core.rag.ai_rag_retriever import AIRagRetriever
 from core.ai_core.rag.config.ai_rag_config import RetrievalConfig
-from core.ai_core.rag.node_functions.node_function_base import NodeFunctionBase, AgentState
+from core.ai_core.rag.node_functions.node_function_base import (
+    NodeFunctionBase,
+    AgentState,
+)
 from core.ai_core.rag.prompts import custom_prompts
 
 logger = logging.getLogger("ai_core")
 
-class DynamicRetrieve(NodeFunctionBase):
-    name="dynamic_retrieve"
-    is_async=True
 
-    def __init__(self,
-                 retrieval_config: RetrievalConfig,
-                 llm: LLMEndpoint,
-                 vector_store: VectorStore | None = None,):
-        super().__init__(retrieval_config=retrieval_config, llm=llm, vector_store=vector_store)
+class DynamicRetrieve(NodeFunctionBase):
+    name = "dynamic_retrieve"
+    is_async = True
+
+    def __init__(
+        self,
+        retrieval_config: RetrievalConfig,
+        llm: LLMEndpoint,
+        vector_store: VectorStore | None = None,
+    ):
+        super().__init__(
+            retrieval_config=retrieval_config, llm=llm, vector_store=vector_store
+        )
 
     def run(self, state: AgentState) -> AgentState:
         raise NotImplementedError

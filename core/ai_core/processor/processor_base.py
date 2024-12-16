@@ -9,6 +9,7 @@ from core.ai_core.files.file import FileExtension, AIFile
 
 logger = logging.getLogger("ai_core")
 
+
 class ProcessorBase(ABC):
     supported_extensions: list[FileExtension | str]
 

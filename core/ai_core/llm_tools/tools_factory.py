@@ -14,6 +14,7 @@ TOOLS_LISTS = {
     **{tool.value: tool for tool in WebSearchTools.tools},
 }
 
+
 class LLMToolFactory:
     @staticmethod
     def create_tool(tool_name: str, config: Dict[str, Any]) -> Union[ToolWrapper, Type]:

@@ -24,14 +24,19 @@ class SimpleCitedAnswer(BaseModel):
         description="You must generate up to 3 follow-up questions that could be asked based on the answer given or context provided.",
     )
 
+
 class CitedAnswerToolsList(str, Enum):
     SIMPLE_CITED_ANSWER = "cited_answer"
 
-def create_cited_answer(tool_name: str, config: Dict[str, Any]) -> Union[BaseTool, Type]:
+
+def create_cited_answer(
+    tool_name: str, config: Dict[str, Any]
+) -> Union[BaseTool, Type]:
     if tool_name == CitedAnswerToolsList.SIMPLE_CITED_ANSWER:
         return SimpleCitedAnswer
     else:
         raise ValueError(f"Tool {tool_name} is not supported.")
+
 
 CitedAnswerTools = ToolsCategory(
     name="cited_answer",

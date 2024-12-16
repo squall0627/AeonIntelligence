@@ -10,10 +10,10 @@ from core.ai_core.rag.config.ai_rag_config import RetrievalConfig, DefaultRerank
 
 class IdempotentCompressor(BaseDocumentCompressor):
     def compress_documents(
-            self,
-            documents: Sequence[Document],
-            query: str,
-            callbacks: Optional[Callbacks] = None,
+        self,
+        documents: Sequence[Document],
+        query: str,
+        callbacks: Optional[Callbacks] = None,
     ) -> Sequence[Document]:
         """
         与えられたドキュメントをそのまま返す、操作を行わないドキュメント圧縮ツール。
@@ -22,10 +22,11 @@ class IdempotentCompressor(BaseDocumentCompressor):
         """
         return documents
 
+
 class AIRagReranker:
     def __init__(
-            self,
-            retrieval_config: RetrievalConfig,
+        self,
+        retrieval_config: RetrievalConfig,
     ):
         self.retrieval_config = retrieval_config
 

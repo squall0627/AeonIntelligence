@@ -24,7 +24,12 @@ from core.ai_core.processor.processor_registry import get_processor_class
 from core.ai_core.rag.config.ai_rag_config import RetrievalConfig
 from core.ai_core.rag.ai_rag_langgraph import AiQARAGLangGraph
 from core.ai_core.rag.entities.chat import ChatHistoryInfo, ChatHistory
-from core.ai_core.rag.entities.models import SearchResult, AIKnowledge, ParsedRAGChunkResponse, ParsedRAGResponse
+from core.ai_core.rag.entities.models import (
+    SearchResult,
+    AIKnowledge,
+    ParsedRAGChunkResponse,
+    ParsedRAGResponse,
+)
 from core.ai_core.storage.storage_base import StorageBase, StorageInfo
 from core.ai_core.storage.storage_builder import StorageBuilder
 from core.ai_core.embedder.embedder_builder import EmbedderBuilder
@@ -33,8 +38,9 @@ from core.ai_core.vectordb.vectordb_builder import VectordbBuilder
 
 logger = logging.getLogger("ai_core")
 
+
 async def process_file(
-        file: AIFile, **processor_kwargs: dict[str, Any]
+    file: AIFile, **processor_kwargs: dict[str, Any]
 ) -> list[Document]:
     """
     ストレージ内のファイルを処理します。
@@ -68,6 +74,7 @@ async def process_file(
 
     return knowledge
 
+
 @dataclass
 class KnowledgeWarehouseInfo:
     kw_id: UUID
@@ -79,7 +86,9 @@ class KnowledgeWarehouseInfo:
     def to_tree(self):
         tree = Tree("📊 Knowledge Warehouse Information")
         tree.add(f"🆔 ID: [bold cyan]{self.kw_id}[/bold cyan]")
-        tree.add(f"🧠 Knowledge Warehouse Name: [bold green]{self.kw_name}[/bold green]")
+        tree.add(
+            f"🧠 Knowledge Warehouse Name: [bold green]{self.kw_name}[/bold green]"
+        )
 
         if self.files_info:
             files_tree = tree.add("📁 Files")
@@ -91,6 +100,7 @@ class KnowledgeWarehouseInfo:
         llm_tree = tree.add("🤖 LLM")
         self.llm_info.add_to_tree(llm_tree)
         return tree
+
 
 class KnowledgeWarehouse:
     """
@@ -117,15 +127,15 @@ class KnowledgeWarehouse:
     """
 
     def __init__(
-            self,
-            *,
-            name: str,
-            llm: LLMEndpoint,
-            kw_id: UUID | None = None,
-            vector_db: VectordbBase | None = None,
-            embedder: EmbedderBase | None = None,
-            storage: StorageBase | None = None,
-            kw_path: str | Path | None = None,
+        self,
+        *,
+        name: str,
+        llm: LLMEndpoint,
+        kw_id: UUID | None = None,
+        vector_db: VectordbBase | None = None,
+        embedder: EmbedderBase | None = None,
+        storage: StorageBase | None = None,
+        kw_path: str | Path | None = None,
     ):
         self.kw_id = kw_id
         self.name = name
@@ -150,9 +160,10 @@ class KnowledgeWarehouse:
     def print_info(self):
         console = Console()
         tree = self.info().to_tree()
-        panel = Panel(tree, title="Knowledge Warehouse Info", expand=False, border_style="bold")
+        panel = Panel(
+            tree, title="Knowledge Warehouse Info", expand=False, border_style="bold"
+        )
         console.print(panel)
-
 
     @classmethod
     def load(cls, folder_path: str | Path) -> Self:
@@ -186,7 +197,9 @@ class KnowledgeWarehouse:
         embedder = EmbedderBuilder.load_embedder(kw_serialized.embedding_config)
 
         # Load vector db
-        vector_db = VectordbBuilder.load_vectordb(kw_serialized.vectordb_config, embedder.embedder)
+        vector_db = VectordbBuilder.load_vectordb(
+            kw_serialized.vectordb_config, embedder.embedder
+        )
 
         return cls(
             kw_id=kw_serialized.kw_id,
@@ -195,7 +208,7 @@ class KnowledgeWarehouse:
             llm=LLMEndpoint.from_config(kw_serialized.llm_config),
             storage=storage,
             vector_db=vector_db,
-            kw_path=folder_path
+            kw_path=folder_path,
         )
 
     async def save(self, folder_path: str | Path):
@@ -295,16 +308,16 @@ class KnowledgeWarehouse:
 
     @classmethod
     async def afrom_files(
-            cls,
-            *,
-            name: str,
-            file_paths: list[str | Path],
-            vector_db: VectordbBase | None = None,
-            storage: StorageBase = StorageBuilder.build_default_storage(None, None),
-            llm: LLMEndpoint | None = None,
-            embedder: EmbedderBase | None = None,
-            skip_file_error: bool = False,
-            processor_kwargs: dict[str, Any] | None = None,
+        cls,
+        *,
+        name: str,
+        file_paths: list[str | Path],
+        vector_db: VectordbBase | None = None,
+        storage: StorageBase = StorageBuilder.build_default_storage(None, None),
+        llm: LLMEndpoint | None = None,
+        embedder: EmbedderBase | None = None,
+        skip_file_error: bool = False,
+        processor_kwargs: dict[str, Any] | None = None,
     ):
         """
         ファイルパスのリストから KnowledgeWarehouse を作成する。
@@ -336,12 +349,14 @@ class KnowledgeWarehouse:
         kw_id = uuid4()
 
         # Add files to storage and vector db
-        vector_db = await cls._add_file_to_storage_and_vectordb(kw_id=kw_id,
-                                                                file_paths=file_paths,
-                                                                storage=storage,
-                                                                embedder=embedder,
-                                                                skip_file_error=skip_file_error,
-                                                                processor_kwargs=processor_kwargs)
+        vector_db = await cls._add_file_to_storage_and_vectordb(
+            kw_id=kw_id,
+            file_paths=file_paths,
+            storage=storage,
+            embedder=embedder,
+            skip_file_error=skip_file_error,
+            processor_kwargs=processor_kwargs,
+        )
 
         return cls(
             kw_id=kw_id,
@@ -354,16 +369,16 @@ class KnowledgeWarehouse:
 
     @classmethod
     def from_files(
-            cls,
-            *,
-            name: str,
-            file_paths: list[str | Path],
-            vector_db: VectordbBase | None = None,
-            storage: StorageBase = StorageBuilder.build_default_storage(None, None),
-            llm: LLMEndpoint | None = None,
-            embedder: EmbedderBase | None = None,
-            skip_file_error: bool = False,
-            processor_kwargs: dict[str, Any] | None = None,
+        cls,
+        *,
+        name: str,
+        file_paths: list[str | Path],
+        vector_db: VectordbBase | None = None,
+        storage: StorageBase = StorageBuilder.build_default_storage(None, None),
+        llm: LLMEndpoint | None = None,
+        embedder: EmbedderBase | None = None,
+        skip_file_error: bool = False,
+        processor_kwargs: dict[str, Any] | None = None,
     ) -> Self:
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(
@@ -380,11 +395,11 @@ class KnowledgeWarehouse:
         )
 
     async def asearch(
-            self,
-            query: str | Document,
-            n_results: int = 5,
-            search_filter: Callable | Dict[str, Any] | None = None,
-            fetch_n_neighbors: int = 20,
+        self,
+        query: str | Document,
+        n_results: int = 5,
+        search_filter: Callable | Dict[str, Any] | None = None,
+        fetch_n_neighbors: int = 20,
     ) -> list[SearchResult]:
         """
         クエリに基づいて KnowledgeWarehouse 内の関連ドキュメントを検索する。
@@ -415,12 +430,12 @@ class KnowledgeWarehouse:
         return [SearchResult(chunk=d, distance=s) for d, s in result]
 
     async def ask_streaming(
-            self,
-            question: str,
-            retrieval_config: RetrievalConfig | None = None,
-            rag_pipeline: Type[Union[AiQARAGLangGraph]] | None = None,
-            list_files: list[AIKnowledge] | None = None,
-            chat_history: ChatHistory | None = None,
+        self,
+        question: str,
+        retrieval_config: RetrievalConfig | None = None,
+        rag_pipeline: Type[Union[AiQARAGLangGraph]] | None = None,
+        list_files: list[AIKnowledge] | None = None,
+        chat_history: ChatHistory | None = None,
     ) -> AsyncGenerator[ParsedRAGChunkResponse, ParsedRAGChunkResponse]:
         """
         KnowledgeWarehouse に質問をして、ストリーム形式で生成された回答を取得する。
@@ -454,7 +469,9 @@ class KnowledgeWarehouse:
             rag_pipeline = AiQARAGLangGraph
 
         rag_instance = rag_pipeline(
-            retrieval_config=retrieval_config, llm=llm, vector_store=self.vector_db.vector_db
+            retrieval_config=retrieval_config,
+            llm=llm,
+            vector_store=self.vector_db.vector_db,
         )
 
         chat_history = self.default_chat if chat_history is None else chat_history
@@ -463,7 +480,7 @@ class KnowledgeWarehouse:
         full_answer = ""
 
         async for response in rag_instance.answer_astream(
-                question=question, history=chat_history, list_files=list_files
+            question=question, history=chat_history, list_files=list_files
         ):
             # Format output
             if not response.last_chunk:
@@ -475,12 +492,12 @@ class KnowledgeWarehouse:
         yield response
 
     async def aask_streaming(
-            self,
-            question: str,
-            retrieval_config: RetrievalConfig | None = None,
-            rag_pipeline: Type[Union[AiQARAGLangGraph]] | None = None,
-            list_files: list[AIKnowledge] | None = None,
-            chat_history: ChatHistory | None = None,
+        self,
+        question: str,
+        retrieval_config: RetrievalConfig | None = None,
+        rag_pipeline: Type[Union[AiQARAGLangGraph]] | None = None,
+        list_files: list[AIKnowledge] | None = None,
+        chat_history: ChatHistory | None = None,
     ) -> ParsedRAGResponse:
         """
         ask_streamingの同期化バージョン.
@@ -498,11 +515,11 @@ class KnowledgeWarehouse:
         metadata = None
 
         async for response in self.ask_streaming(
-                question=question,
-                retrieval_config=retrieval_config,
-                rag_pipeline=rag_pipeline,
-                list_files=list_files,
-                chat_history=chat_history,
+            question=question,
+            retrieval_config=retrieval_config,
+            rag_pipeline=rag_pipeline,
+            list_files=list_files,
+            chat_history=chat_history,
         ):
             full_answer += response.answer
             if response.last_chunk:
@@ -511,12 +528,12 @@ class KnowledgeWarehouse:
         return ParsedRAGResponse(answer=full_answer, metadata=metadata)
 
     def ask(
-            self,
-            question: str,
-            retrieval_config: RetrievalConfig | None = None,
-            rag_pipeline: Type[Union[AiQARAGLangGraph]] | None = None,
-            list_files: list[AIKnowledge] | None = None,
-            chat_history: ChatHistory | None = None,
+        self,
+        question: str,
+        retrieval_config: RetrievalConfig | None = None,
+        rag_pipeline: Type[Union[AiQARAGLangGraph]] | None = None,
+        list_files: list[AIKnowledge] | None = None,
+        chat_history: ChatHistory | None = None,
     ) -> ParsedRAGResponse:
         """
         ask_streamingの完全同期化バージョン.
@@ -542,14 +559,16 @@ class KnowledgeWarehouse:
         )
 
     @classmethod
-    async def _add_file_to_storage_and_vectordb(cls,
-                                                kw_id: UUID,
-                                                file_paths: list[str | Path],
-                                                storage: StorageBase,
-                                                vector_db: VectordbBase | None = None,
-                                                embedder: EmbedderBase | None = None,
-                                                skip_file_error: bool = False,
-                                                processor_kwargs: dict[str, Any] | None = None,) -> VectordbBase | None:
+    async def _add_file_to_storage_and_vectordb(
+        cls,
+        kw_id: UUID,
+        file_paths: list[str | Path],
+        storage: StorageBase,
+        vector_db: VectordbBase | None = None,
+        embedder: EmbedderBase | None = None,
+        skip_file_error: bool = False,
+        processor_kwargs: dict[str, Any] | None = None,
+    ) -> VectordbBase | None:
 
         processor_kwargs = processor_kwargs or {}
 
@@ -574,7 +593,9 @@ class KnowledgeWarehouse:
 
             # Building KnowledgeWarehouse's vectordb
             if vector_db is None:
-                vector_db = await VectordbBuilder.build_default_vectordb(docs, embedder.embedder)
+                vector_db = await VectordbBuilder.build_default_vectordb(
+                    docs, embedder.embedder
+                )
                 ids = vector_db.get_all_ids()
             else:
                 ids = await vector_db.vector_db.aadd_documents(docs)
@@ -585,10 +606,12 @@ class KnowledgeWarehouse:
 
         return vector_db
 
-    async def aadd_files(self,
-                        file_paths: list[str | Path],
-                        skip_file_error: bool = False,
-                        processor_kwargs: dict[str, Any] | None = None,) -> None:
+    async def aadd_files(
+        self,
+        file_paths: list[str | Path],
+        skip_file_error: bool = False,
+        processor_kwargs: dict[str, Any] | None = None,
+    ) -> None:
         await self._add_file_to_storage_and_vectordb(
             kw_id=self.kw_id,
             file_paths=file_paths,
@@ -602,8 +625,12 @@ class KnowledgeWarehouse:
     async def delete_file(self, file: AIFile) -> None:
         # Remove file from storage
         await self.storage.remove_file(file.file_id)
-        logger.debug(f"removed file {file.original_filename} from {self.name}'s storage")
+        logger.debug(
+            f"removed file {file.original_filename} from {self.name}'s storage"
+        )
 
         # Remove file from vector db
         self.vector_db.vector_db.delete(file.vectordb_ids)
-        logger.debug(f"removed file {file.original_filename} from {self.name}'s vector db")
+        logger.debug(
+            f"removed file {file.original_filename} from {self.name}'s vector db"
+        )

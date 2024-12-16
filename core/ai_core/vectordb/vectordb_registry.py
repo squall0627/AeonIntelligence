@@ -19,6 +19,7 @@ known_vectordbs: VectordbMapping = {
     VectordbType.FaissGPU: "core.ai_core.vectordb.impl.faiss_gpu.FaissGpu",
 }
 
+
 def get_vectordb_class(vectordb_type: VectordbType | str) -> Type[VectordbBase]:
     if vectordb_type not in registry:
         if vectordb_type not in known_vectordbs:
@@ -36,6 +37,7 @@ def get_vectordb_class(vectordb_type: VectordbType | str) -> Type[VectordbBase]:
 
     cls = registry[vectordb_type]
     return cls
+
 
 def _import_class(full_mod_path: str):
     if ":" in full_mod_path:

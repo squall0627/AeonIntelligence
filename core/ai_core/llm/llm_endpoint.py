@@ -15,9 +15,14 @@ from langchain_anthropic import ChatAnthropic
 from langchain_ollama import ChatOllama
 
 from core.ai_core.llm.llm_callbacks import AgentCallbackHandler
-from core.ai_core.llm.llm_config import LLMEndpointConfig, DefaultModelSuppliers, DEFAULT_LLM_NAME
+from core.ai_core.llm.llm_config import (
+    LLMEndpointConfig,
+    DefaultModelSuppliers,
+    DEFAULT_LLM_NAME,
+)
 
 logger = logging.getLogger("ai_core")
+
 
 @dataclass
 class LLMInfo:
@@ -37,6 +42,7 @@ class LLMInfo:
             f"Supports Function Calling: [bold {func_call_color}]{self.supports_function_calling}[/bold {func_call_color}]"
         )
 
+
 class LLMEndpoint:
     def __init__(self, llm_config: LLMEndpointConfig, llm: BaseChatModel):
         self._config = llm_config
@@ -52,7 +58,9 @@ class LLMEndpoint:
             )
             try:
                 self.tokenizer = AutoTokenizer.from_pretrained(llm_config.tokenizer_hub)
-            except OSError:  # Hugging Face に接続できない場合、またはキャッシュされたモデルが存在しない場合
+            except (
+                OSError
+            ):  # Hugging Face に接続できない場合、またはキャッシュされたモデルが存在しない場合
                 logger.warning(
                     f"Cannot access the configured tokenizer from {llm_config.tokenizer_hub}, using the default tokenizer {llm_config.fallback_tokenizer}"
                 )
@@ -73,48 +81,46 @@ class LLMEndpoint:
                 _llm = AzureChatOpenAI(
                     azure_deployment=deployment,
                     api_version=api_version,
-                    api_key=SecretStr(config.llm_api_key)
-                    if config.llm_api_key
-                    else None,
+                    api_key=(
+                        SecretStr(config.llm_api_key) if config.llm_api_key else None
+                    ),
                     azure_endpoint=azure_endpoint,
                     max_tokens=config.max_output_tokens,
                     temperature=config.temperature,
-                    callbacks=[AgentCallbackHandler()]
+                    callbacks=[AgentCallbackHandler()],
                 )
             elif config.supplier == DefaultModelSuppliers.ANTHROPIC:
                 _llm = ChatAnthropic(
                     model_name=config.model,
-                    api_key=SecretStr(config.llm_api_key)
-                    if config.llm_api_key
-                    else None,
+                    api_key=(
+                        SecretStr(config.llm_api_key) if config.llm_api_key else None
+                    ),
                     base_url=config.llm_base_url,
                     max_tokens=config.max_output_tokens,
                     temperature=config.temperature,
-                    callbacks=[AgentCallbackHandler()]
+                    callbacks=[AgentCallbackHandler()],
                 )
             elif config.supplier == DefaultModelSuppliers.OPENAI:
                 _llm = ChatOpenAI(
                     model=config.model,
-                    api_key=SecretStr(config.llm_api_key)
-                    if config.llm_api_key
-                    else None,
+                    api_key=(
+                        SecretStr(config.llm_api_key) if config.llm_api_key else None
+                    ),
                     base_url=config.llm_base_url,
                     max_tokens=config.max_output_tokens,
                     temperature=config.temperature,
-                    callbacks=[AgentCallbackHandler()]
+                    callbacks=[AgentCallbackHandler()],
                 )
             else:
                 _llm = ChatOllama(
                     model=config.model,
                     num_ctx=config.context_length,
                     temperature=config.temperature,
-                    callbacks=[AgentCallbackHandler()]
+                    callbacks=[AgentCallbackHandler()],
                 )
             return cls(llm=_llm, llm_config=config)
         except ImportError as e:
-            raise ImportError(
-                "Please provide a valid BaseLLM"
-            ) from e
+            raise ImportError("Please provide a valid BaseLLM") from e
 
     def count_tokens(self, text: str) -> int:
         # 入力テキストをトークン化し、トークンの数を返します。
@@ -140,14 +146,17 @@ class LLMEndpoint:
     def llm(self):
         return self._llm
 
+
 def default_rag_llm() -> LLMEndpoint:
     try:
-        logger.debug(f"Loaded {DEFAULT_LLM_NAME} as default LLM for knowledge warehouse")
+        logger.debug(
+            f"Loaded {DEFAULT_LLM_NAME} as default LLM for knowledge warehouse"
+        )
         llm = LLMEndpoint.from_config(
-            LLMEndpointConfig(supplier=DefaultModelSuppliers.MISTRAL, model=DEFAULT_LLM_NAME)
+            LLMEndpointConfig(
+                supplier=DefaultModelSuppliers.MISTRAL, model=DEFAULT_LLM_NAME
+            )
         )
         return llm
     except ImportError as e:
-        raise ImportError(
-            "Please provide a valid BaseLLM"
-        ) from e
+        raise ImportError("Please provide a valid BaseLLM") from e

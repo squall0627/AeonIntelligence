@@ -1,10 +1,17 @@
 import datetime
 
-from langchain_core.prompts import PromptTemplate, BasePromptTemplate, ChatPromptTemplate, SystemMessagePromptTemplate, \
-    MessagesPlaceholder, HumanMessagePromptTemplate
+from langchain_core.prompts import (
+    PromptTemplate,
+    BasePromptTemplate,
+    ChatPromptTemplate,
+    SystemMessagePromptTemplate,
+    MessagesPlaceholder,
+    HumanMessagePromptTemplate,
+)
 from pydantic import ConfigDict, create_model
 
 DEFAULT_CHATBOT_NAME = "Aeon Intelligence"
+
 
 class CustomPromptsDict(dict):
     def __init__(self, p_type, *args, **kwargs):
@@ -15,8 +22,11 @@ class CustomPromptsDict(dict):
         # Automatically convert the value into a tuple (my_type, value)
         super().__setitem__(key, (self._type, value))
 
+
 def _define_custom_prompts() -> CustomPromptsDict:
-    custom_prompts_inner: CustomPromptsDict = CustomPromptsDict(p_type=BasePromptTemplate)
+    custom_prompts_inner: CustomPromptsDict = CustomPromptsDict(
+        p_type=BasePromptTemplate
+    )
 
     today_date = datetime.datetime.now().strftime("%B %d, %Y")
 
@@ -44,7 +54,6 @@ def _define_custom_prompts() -> CustomPromptsDict:
 
     custom_prompts_inner["CONDENSE_QUESTION_PROMPT"] = condense_question_prompt
 
-
     # ---------------------------------------------------------------------------
     # Prompt for formatting documents
     # ---------------------------------------------------------------------------
@@ -53,7 +62,6 @@ def _define_custom_prompts() -> CustomPromptsDict:
     )
 
     custom_prompts_inner["DEFAULT_DOCUMENT_PROMPT"] = default_document_prompt
-
 
     # ---------------------------------------------------------------------------
     # Prompt for RAG
@@ -102,7 +110,6 @@ def _define_custom_prompts() -> CustomPromptsDict:
     )
     custom_prompts_inner["RAG_ANSWER_PROMPT"] = rag_answer_prompt
 
-
     # ---------------------------------------------------------------------------
     # Prompt to grade the relevance of an answer and decide whether to perform a web search
     # ---------------------------------------------------------------------------
@@ -134,7 +141,6 @@ def _define_custom_prompts() -> CustomPromptsDict:
     )
 
     custom_prompts_inner["TOOL_ROUTING_PROMPT"] = tool_routing_prompt
-
 
     # ---------------------------------------------------------------------------
     # Prompt to split the user input into multiple questions / instructions
@@ -173,7 +179,6 @@ def _define_custom_prompts() -> CustomPromptsDict:
     )
     custom_prompts_inner["SPLIT_PROMPT"] = split_prompt
 
-
     # ---------------------------------------------------------------------------
     # Prompt to create a system prompt from user instructions
     # ---------------------------------------------------------------------------
@@ -205,6 +210,7 @@ def _define_custom_prompts() -> CustomPromptsDict:
     custom_prompts_inner["UPDATE_PROMPT"] = update_prompt
 
     return custom_prompts_inner
+
 
 _custom_prompts = _define_custom_prompts()
 CustomPromptsModel = create_model(

@@ -2,20 +2,24 @@
 import streamlit as st
 import re
 
+
 def get_user_specific_key(base_key: str, user_id: str) -> str:
     return f"user_{user_id}_{base_key}"
 
+
 def is_valid_email(email: str) -> bool:
     """Check if string is a valid email."""
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     return bool(re.match(pattern, email))
+
 
 def initialize_auth_state():
     """Initialize authentication-related session state variables."""
-    if 'authenticated' not in st.session_state:
+    if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
-    if 'login_user_id' not in st.session_state:
+    if "login_user_id" not in st.session_state:
         st.session_state.login_user_id = None
+
 
 def login(email: str) -> bool:
     """Handle user login."""
@@ -24,6 +28,7 @@ def login(email: str) -> bool:
         st.session_state.login_user_id = email
         return True
     return False
+
 
 def logout():
     """Handle user logout."""

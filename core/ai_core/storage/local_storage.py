@@ -34,9 +34,7 @@ class LocalStorage(StorageBase):
         self.copy_flag = copy_flag
 
         if dir_path is None:
-            self.dir_path = Path(
-                os.getenv("AI_LOCAL_STORAGE", "~/.cache/ai/files")
-            )
+            self.dir_path = Path(os.getenv("AI_LOCAL_STORAGE", "~/.cache/ai/files"))
         else:
             self.dir_path = dir_path
         os.makedirs(self.dir_path, exist_ok=True)
@@ -91,4 +89,4 @@ class LocalStorage(StorageBase):
         return LocalStorageConfig(
             storage_path=self.dir_path,
             files={f.file_id: f.serialize() for f in self.files},
-       )
+        )

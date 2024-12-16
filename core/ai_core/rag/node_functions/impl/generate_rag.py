@@ -5,19 +5,26 @@ from langchain_core.vectorstores import VectorStore
 
 from core.ai_core.llm import LLMEndpoint
 from core.ai_core.rag.config.ai_rag_config import RetrievalConfig
-from core.ai_core.rag.node_functions.node_function_base import NodeFunctionBase, AgentState
+from core.ai_core.rag.node_functions.node_function_base import (
+    NodeFunctionBase,
+    AgentState,
+)
 from core.ai_core.rag.prompts import custom_prompts
 
 
 class GenerateRag(NodeFunctionBase):
-    name="generate_rag"
-    is_async=False
+    name = "generate_rag"
+    is_async = False
 
-    def __init__(self,
-                 retrieval_config: RetrievalConfig,
-                 llm: LLMEndpoint,
-                 vector_store: VectorStore | None = None,):
-        super().__init__(retrieval_config=retrieval_config, llm=llm, vector_store=vector_store)
+    def __init__(
+        self,
+        retrieval_config: RetrievalConfig,
+        llm: LLMEndpoint,
+        vector_store: VectorStore | None = None,
+    ):
+        super().__init__(
+            retrieval_config=retrieval_config, llm=llm, vector_store=vector_store
+        )
 
     def run(self, state: AgentState) -> AgentState:
         docs: List[Document] | None = state["docs"]

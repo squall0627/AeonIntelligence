@@ -43,10 +43,10 @@ class TransparentStorage(StorageBase):
     @classmethod
     def load(cls, config: TransparentStorageConfig) -> Self:
         t_storage = cls()
-        t_storage.id_files = {
-            i: AIFile.deserialize(f) for i, f in config.files.items()
-        }
+        t_storage.id_files = {i: AIFile.deserialize(f) for i, f in config.files.items()}
         return t_storage
 
     def save(self) -> TransparentStorageConfig:
-        return TransparentStorageConfig(files={f.file_id: f.serialize() for f in self.id_files.values()})
+        return TransparentStorageConfig(
+            files={f.file_id: f.serialize() for f in self.id_files.values()}
+        )

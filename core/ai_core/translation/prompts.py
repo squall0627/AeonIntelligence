@@ -1,8 +1,13 @@
 import datetime
 
-from langchain_core.prompts import BasePromptTemplate, ChatPromptTemplate, SystemMessagePromptTemplate, \
-    HumanMessagePromptTemplate
+from langchain_core.prompts import (
+    BasePromptTemplate,
+    ChatPromptTemplate,
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+)
 from pydantic import ConfigDict, create_model
+
 
 class TranslationPromptsDict(dict):
     def __init__(self, p_type, *args, **kwargs):
@@ -13,8 +18,11 @@ class TranslationPromptsDict(dict):
         # Automatically convert the value into a tuple (my_type, value)
         super().__setitem__(key, (self._type, value))
 
+
 def _define_translation_prompts() -> TranslationPromptsDict:
-    translation_prompts_inner: TranslationPromptsDict = TranslationPromptsDict(p_type=BasePromptTemplate)
+    translation_prompts_inner: TranslationPromptsDict = TranslationPromptsDict(
+        p_type=BasePromptTemplate
+    )
 
     today_date = datetime.datetime.now().strftime("%B %d, %Y")
 
@@ -32,12 +40,12 @@ def _define_translation_prompts() -> TranslationPromptsDict:
         # "For technical terms and proper nouns, You MUST always use provided Keywords Map into the target language if it is contained in Keywords Map while preserving their original context and nuance. \n"
         # "Otherwise, leave them in the original language. \n"
         "Input Example:\n"
-        "　・Keywords Map: {{\"订单\": \"注文\", \"捡货\": \"ピッキング\", \"订单中心\": \"注文センター\"}}\n"
+        '　・Keywords Map: {{"订单": "注文", "捡货": "ピッキング", "订单中心": "注文センター"}}\n'
         "　・Target Language: Japanese\n"
         "Output Example:\n"
-        "　・\"订单\" → 注文\n"
-        "　・\"捡货\" → ピッキング\n"
-        "　・\"订单中心\" → 注文センター\n"
+        '　・"订单" → 注文\n'
+        '　・"捡货" → ピッキング\n'
+        '　・"订单中心" → 注文センター\n'
         "You DO NOT need to output your reasoning process, ONLY output your Final Translation. \n"
         "If no text for translation is provided, DO NOT output anything. \n"
         "Take a deep breath, calm down, and start translating.\n\n"
@@ -46,7 +54,6 @@ def _define_translation_prompts() -> TranslationPromptsDict:
     keywords_map = "Keywords Map: {keywords_map}\n\n"
     instruction = "Instruction: {instruction}\n"
     input_text = "Input text: {input_text}\n"
-
 
     simple_translate = ChatPromptTemplate.from_messages(
         [
@@ -61,9 +68,12 @@ def _define_translation_prompts() -> TranslationPromptsDict:
 
     return translation_prompts_inner
 
+
 _translation_prompts = _define_translation_prompts()
 TranslationPromptsModel = create_model(
-    "TranslationPromptsModel", **_translation_prompts, __config__=ConfigDict(extra="forbid")
+    "TranslationPromptsModel",
+    **_translation_prompts,
+    __config__=ConfigDict(extra="forbid")
 )
 
 translation_prompts = TranslationPromptsModel()

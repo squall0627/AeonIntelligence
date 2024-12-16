@@ -8,18 +8,27 @@ from core.ai_core.storage.transparent_storage import TransparentStorage
 
 StorageMapping: TypeAlias = dict[StorageType, Callable[[str, bool], StorageBase]]
 
+
 class StorageBuilder:
     KNOWN_STORAGE: StorageMapping = {
-        StorageType.TransparentStorage: (lambda dir_path, copy_flag : TransparentStorage()),
-        StorageType.LocalStorage: (lambda dir_path, copy_flag : LocalStorage(dir_path, copy_flag)),
+        StorageType.TransparentStorage: (
+            lambda dir_path, copy_flag: TransparentStorage()
+        ),
+        StorageType.LocalStorage: (
+            lambda dir_path, copy_flag: LocalStorage(dir_path, copy_flag)
+        ),
     }
 
     @classmethod
-    def build_default_storage(cls, dir_path: str | None, copy_flag: bool | None) -> StorageBase:
+    def build_default_storage(
+        cls, dir_path: str | None, copy_flag: bool | None
+    ) -> StorageBase:
         return cls.build_storage(default_storage_type(), dir_path, copy_flag)
 
     @classmethod
-    def build_storage(cls, storage_type: StorageType, dir_path: str | None, copy_flag: bool | None) -> StorageBase:
+    def build_storage(
+        cls, storage_type: StorageType, dir_path: str | None, copy_flag: bool | None
+    ) -> StorageBase:
         if storage_type not in cls.KNOWN_STORAGE:
             raise NotImplementedError(f"Storage type {storage_type} not implemented")
         else:
@@ -35,7 +44,9 @@ class StorageBuilder:
             elif config.storage_type == StorageType.TransparentStorage:
                 return TransparentStorage.load(config)
             else:
-                raise NotImplementedError(f"Storage type {config.storage_type} not implemented")
+                raise NotImplementedError(
+                    f"Storage type {config.storage_type} not implemented"
+                )
 
     @classmethod
     def save_storage(cls, storage: StorageBase) -> StorageConfig:

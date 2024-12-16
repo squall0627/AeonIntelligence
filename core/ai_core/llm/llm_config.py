@@ -10,6 +10,7 @@ from core.ai_core.utils.utils import normalize_to_env_variable_name
 
 logger = logging.getLogger("ai_core")
 
+
 class LLMName(str, Enum):
     gpt_4o = "gpt-4o"
     gpt_4o_mini = "gpt-4o-mini"
@@ -43,6 +44,7 @@ class LLMName(str, Enum):
 
 DEFAULT_LLM_NAME = LLMName.mistral_small
 
+
 class DefaultModelSuppliers(str, Enum):
     OPENAI = "openai"
     AZURE = "azure"
@@ -51,17 +53,23 @@ class DefaultModelSuppliers(str, Enum):
     MISTRAL = "mistral"
     ALIBABA = "alibaba"
 
+
 class LLMConfig(AIBaseConfig):
     context: int | None = None
     tokenizer_hub: str | None = None
     supports_func_calling: bool = True
 
+
 class LLMModelConfig:
     _model_defaults: Dict[DefaultModelSuppliers, Dict[LLMName, LLMConfig]] = {
         DefaultModelSuppliers.OPENAI: {
             LLMName.gpt_4o: LLMConfig(context=128000, tokenizer_hub="Xenova/gpt-4o"),
-            LLMName.gpt_4o_mini: LLMConfig(context=128000, tokenizer_hub="Xenova/gpt-4o"),
-            LLMName.gpt_4_turbo: LLMConfig(context=128000, tokenizer_hub="Xenova/gpt-4"),
+            LLMName.gpt_4o_mini: LLMConfig(
+                context=128000, tokenizer_hub="Xenova/gpt-4o"
+            ),
+            LLMName.gpt_4_turbo: LLMConfig(
+                context=128000, tokenizer_hub="Xenova/gpt-4"
+            ),
             LLMName.gpt_4: LLMConfig(context=8192, tokenizer_hub="Xenova/gpt-4"),
             LLMName.gpt_35_turbo: LLMConfig(
                 context=16385, tokenizer_hub="Xenova/gpt-3.5-turbo"
@@ -101,7 +109,9 @@ class LLMModelConfig:
         },
         DefaultModelSuppliers.META: {
             LLMName.llama3_2_vision_11b: LLMConfig(
-                context=128000, tokenizer_hub="Xenova/Meta-Llama-3.1-Tokenizer", supports_func_calling=False
+                context=128000,
+                tokenizer_hub="Xenova/Meta-Llama-3.1-Tokenizer",
+                supports_func_calling=False,
             ),
             LLMName.llama_3_1_8b: LLMConfig(
                 context=128000, tokenizer_hub="Xenova/Meta-Llama-3.1-Tokenizer"
@@ -112,7 +122,11 @@ class LLMModelConfig:
             LLMName.llama_3: LLMConfig(
                 context=8192, tokenizer_hub="Xenova/llama3-tokenizer-new"
             ),
-            LLMName.llama_2: LLMConfig(context=4096, tokenizer_hub="Xenova/llama2-tokenizer", supports_func_calling=False),
+            LLMName.llama_2: LLMConfig(
+                context=4096,
+                tokenizer_hub="Xenova/llama2-tokenizer",
+                supports_func_calling=False,
+            ),
             LLMName.code_llama: LLMConfig(
                 context=16384, tokenizer_hub="Xenova/llama-code-tokenizer"
             ),
@@ -135,12 +149,8 @@ class LLMModelConfig:
             ),
         },
         DefaultModelSuppliers.ALIBABA: {
-            LLMName.qwq: LLMConfig(
-                context=32000, tokenizer_hub=""
-            ),
-            LLMName.qwen_32b: LLMConfig(
-                context=32000, tokenizer_hub=""
-            ),
+            LLMName.qwq: LLMConfig(context=32000, tokenizer_hub=""),
+            LLMName.qwen_32b: LLMConfig(context=32000, tokenizer_hub=""),
         },
     }
 
@@ -154,7 +164,7 @@ class LLMModelConfig:
 
     @classmethod
     def get_llm_model_config(
-            cls, supplier: DefaultModelSuppliers, model_name: str
+        cls, supplier: DefaultModelSuppliers, model_name: str
     ) -> Optional[LLMConfig]:
         """指定されたサプライヤーとモデルの LLMConfig（context と tokenizer_hub）を取得します。"""
         supplier_defaults = cls._model_defaults.get(supplier)
@@ -165,6 +175,7 @@ class LLMModelConfig:
             if model_name.startswith(key):
                 return config
         return None
+
 
 class LLMEndpointConfig(AIBaseConfig):
     supplier: DefaultModelSuppliers = DefaultModelSuppliers.MISTRAL
@@ -204,7 +215,9 @@ class LLMEndpointConfig(AIBaseConfig):
         if not self.llm_api_key and force_reset:
             self.llm_api_key = os.getenv(self.env_variable_name)
             if not self.llm_api_key:
-                logger.warning(f"The API key for supplier '{self.supplier}' is not set. ")
+                logger.warning(
+                    f"The API key for supplier '{self.supplier}' is not set. "
+                )
 
     def set_llm_model_config(self):
         llm_model_config = LLMModelConfig.get_llm_model_config(

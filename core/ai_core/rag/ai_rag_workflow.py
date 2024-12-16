@@ -18,7 +18,11 @@ class DefaultWorkflow(str, Enum):
                 NodeConfig(name="filter_history", edges=["rephrase_question"]),
                 NodeConfig(name="rephrase_question", edges=["retrieve"]),
                 NodeConfig(name="retrieve", edges=["generate_rag"]),
-                NodeConfig(name="generate_rag", edges=[END], tools=[{"name": CitedAnswerToolsList.SIMPLE_CITED_ANSWER}]),
+                NodeConfig(
+                    name="generate_rag",
+                    edges=[END],
+                    tools=[{"name": CitedAnswerToolsList.SIMPLE_CITED_ANSWER}],
+                ),
             ]
         }
         return workflows[self]

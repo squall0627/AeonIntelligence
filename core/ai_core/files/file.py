@@ -37,6 +37,7 @@ class FileExtension(str, Enum):
     wav = ".wav"
     mpeg = ".mpeg"
 
+
 class AIFileSerialized(BaseModel):
     file_id: UUID
     original_filename: str
@@ -47,6 +48,7 @@ class AIFileSerialized(BaseModel):
     file_size: int | None = None
     vectordb_ids: list[str] | None = None
     additional_metadata: dict[str, Any] | None = None
+
 
 def get_file_extension(file_path: Path) -> FileExtension | str:
     try:
@@ -62,6 +64,7 @@ def get_file_extension(file_path: Path) -> FileExtension | str:
             stacklevel=2,
         )
         return file_path.suffix
+
 
 async def load_aifile(kw_id: UUID, path: str | Path):
     if not isinstance(path, Path):
@@ -90,6 +93,7 @@ async def load_aifile(kw_id: UUID, path: str | Path):
         file_sha1=file_sha1,
     )
 
+
 class AIFile:
     __slots__ = [
         "file_id",
@@ -104,16 +108,16 @@ class AIFile:
     ]
 
     def __init__(
-            self,
-            file_id: UUID,
-            original_filename: str,
-            path: Path,
-            file_sha1: str,
-            file_extension: FileExtension | str,
-            kw_id: UUID | None = None,
-            file_size: int | None = None,
-            vectordb_ids: list[str] | None = None,
-            metadata: dict[str, Any] | None = None,
+        self,
+        file_id: UUID,
+        original_filename: str,
+        path: Path,
+        file_sha1: str,
+        file_extension: FileExtension | str,
+        kw_id: UUID | None = None,
+        file_size: int | None = None,
+        vectordb_ids: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         self.file_id = file_id
         self.kw_id = kw_id

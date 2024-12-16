@@ -1,5 +1,6 @@
 import re
 
+
 def normalize_to_env_variable_name(name: str) -> str:
     # 文字、数字、またはアンダースコア以外の文字をすべてアンダースコアに置き換えます。
     env_variable_name = re.sub(r"[^A-Za-z0-9_]", "_", name).upper()

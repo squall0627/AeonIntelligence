@@ -29,7 +29,9 @@ class NodeFunctionsFactory:
                 cls._know_node_functions = {}
 
                 # Import all modules in the package of the base class
-                cls._import_all_modules_in_package("core.ai_core.rag.node_functions.impl")
+                cls._import_all_modules_in_package(
+                    "core.ai_core.rag.node_functions.impl"
+                )
 
                 # Load all node functions recursively
                 cls._load_all_node_functions_recursively(base_class)
@@ -40,20 +42,26 @@ class NodeFunctionsFactory:
         for subclass in base_class.__subclasses__():
             # Add the subclass to the known node functions
             cls._know_node_functions[getattr(subclass, "name")] = subclass
-            cls._know_node_functions.update(cls._load_all_node_functions_recursively(subclass))
+            cls._know_node_functions.update(
+                cls._load_all_node_functions_recursively(subclass)
+            )
         return cls._know_node_functions
 
     @classmethod
-    def get_node_function(cls,
-                          name: str,
-                          retrieval_config: RetrievalConfig,
-                          llm: LLMEndpoint,
-                          vector_store: VectorStore | None = None) -> Optional[RunnableLike]:
+    def get_node_function(
+        cls,
+        name: str,
+        retrieval_config: RetrievalConfig,
+        llm: LLMEndpoint,
+        vector_store: VectorStore | None = None,
+    ) -> Optional[RunnableLike]:
         if not cls._know_node_functions or name not in cls._know_node_functions.keys():
             cls._load_all_node_functions(NodeFunctionBase)
         if name in cls._know_node_functions.keys():
             func_cls = cls._know_node_functions[name]
-            func_obj = func_cls(retrieval_config=retrieval_config, llm=llm, vector_store=vector_store)
+            func_obj = func_cls(
+                retrieval_config=retrieval_config, llm=llm, vector_store=vector_store
+            )
             return func_obj.arun if func_obj.is_async else func_obj.run
         else:
             raise ValueError(f"Node function {name} not found")

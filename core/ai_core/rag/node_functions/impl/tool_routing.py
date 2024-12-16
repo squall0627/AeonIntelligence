@@ -6,7 +6,10 @@ from pydantic import BaseModel, Field
 
 from core.ai_core.llm import LLMEndpoint
 from core.ai_core.rag.config.ai_rag_config import RetrievalConfig
-from core.ai_core.rag.node_functions.node_function_base import NodeFunctionBase, AgentState
+from core.ai_core.rag.node_functions.node_function_base import (
+    NodeFunctionBase,
+    AgentState,
+)
 from core.ai_core.rag.prompts import custom_prompts
 
 
@@ -43,15 +46,20 @@ class TasksCompletion(BaseModel):
         description="The tool that shall be used to complete the tasks.",
     )
 
-class ToolRouting(NodeFunctionBase):
-    name="tool_routing"
-    is_async=False
 
-    def __init__(self,
-                 retrieval_config: RetrievalConfig,
-                 llm: LLMEndpoint,
-                 vector_store: VectorStore | None = None,):
-        super().__init__(retrieval_config=retrieval_config, llm=llm, vector_store=vector_store)
+class ToolRouting(NodeFunctionBase):
+    name = "tool_routing"
+    is_async = False
+
+    def __init__(
+        self,
+        retrieval_config: RetrievalConfig,
+        llm: LLMEndpoint,
+        vector_store: VectorStore | None = None,
+    ):
+        super().__init__(
+            retrieval_config=retrieval_config, llm=llm, vector_store=vector_store
+        )
 
     def run(self, state: AgentState) -> Any:
         tasks = state["tasks"]
@@ -60,7 +68,9 @@ class ToolRouting(NodeFunctionBase):
 
         docs = state["docs"]
 
-        _, activated_tools = self.retrieval_config.workflow_config.collect_tools_prompt()
+        _, activated_tools = (
+            self.retrieval_config.workflow_config.collect_tools_prompt()
+        )
 
         p_input = {
             "chat_history": state["chat_history"].to_list(),
@@ -84,7 +94,9 @@ class ToolRouting(NodeFunctionBase):
         send_list: List[Send] = []
 
         if response and response.non_completable_tasks and response.tool:
-            print(f"############## Will run run_tool with tasks: {response.non_completable_tasks} and tool: {response.tool}")
+            print(
+                f"############## Will run run_tool with tasks: {response.non_completable_tasks} and tool: {response.tool}"
+            )
             payload = {
                 **state,
                 "tasks": response.non_completable_tasks,

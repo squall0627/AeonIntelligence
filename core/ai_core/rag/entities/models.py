@@ -12,12 +12,14 @@ class SearchResult(BaseModel):
     chunk: Document
     distance: float
 
+
 class KnowledgeStatus(str, Enum):
     ERROR = "ERROR"
     RESERVED = "RESERVED"
     PROCESSING = "PROCESSING"
     PROCESSED = "PROCESSED"
     UPLOADED = "UPLOADED"
+
 
 class AIKnowledge(BaseModel):
     id: UUID
@@ -35,9 +37,11 @@ class AIKnowledge(BaseModel):
     created_at: Optional[datetime] = None
     metadata: Optional[Dict[str, str]] = None
 
+
 class RawRAGResponse(TypedDict):
     answer: dict[str, Any]
     docs: dict[str, Any]
+
 
 class ChatLLMMetadata(BaseModel):
     name: str
@@ -47,15 +51,18 @@ class ChatLLMMetadata(BaseModel):
     kw_id: str | None = None
     kw_name: str | None = None
 
+
 class RAGResponseMetadata(BaseModel):
     citations: list[int] = Field(default_factory=list)
     followup_questions: list[str] = Field(default_factory=list)
     sources: list[Any] = Field(default_factory=list)
     metadata_model: ChatLLMMetadata | None = None
 
+
 class ParsedRAGResponse(BaseModel):
     answer: str
     metadata: RAGResponseMetadata | None = None
+
 
 class ParsedRAGChunkResponse(BaseModel):
     answer: str

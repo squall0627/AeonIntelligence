@@ -7,9 +7,11 @@ from core.utils.log_handler import rotating_file_logger
 logger = rotating_file_logger("translator_app")
 translator_app = Flask(__name__)
 
+
 @translator_app.route("/")
 def index():
     return "Hello, This is the translator app!"
+
 
 @translator_app.route("/translate", methods=["POST"])
 def translate():
@@ -30,6 +32,7 @@ def translate():
 
     return jsonify({"translated_text": translated_text})
 
+
 @translator_app.route("/chinese_to_japanese", methods=["POST"])
 def chinese_to_japanese():
     logger.info("chinese_to_japanese endpoint called")
@@ -47,6 +50,7 @@ def chinese_to_japanese():
 
     return jsonify({"translated_text": translated_text})
 
+
 @translator_app.route("/japanese_to_chinese", methods=["POST"])
 def japanese_to_chinese():
     logger.info("japanese_to_chinese endpoint called")
@@ -63,6 +67,7 @@ def japanese_to_chinese():
     logger.info(f"Translated text: {translated_text}")
 
     return jsonify({"translated_text": translated_text})
+
 
 if __name__ == "__main__":
     translator_app.run(host="0.0.0.0", port=5001, debug=True)

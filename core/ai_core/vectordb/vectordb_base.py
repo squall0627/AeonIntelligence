@@ -12,6 +12,7 @@ from core.ai_core.vectordb.vectordb_config import VectordbType
 
 logger = logging.getLogger("ai_core")
 
+
 class VectordbBase(ABC):
     supported_vectordb: list[VectordbType]
     vector_db: VectorStore | None
@@ -37,7 +38,9 @@ class VectordbBase(ABC):
         return self
 
     @abstractmethod
-    async def build_impl(self, docs: list[Document], embedder: Embeddings) -> VectorStore:
+    async def build_impl(
+        self, docs: list[Document], embedder: Embeddings
+    ) -> VectorStore:
         raise NotImplementedError
 
     async def save(self, kw_path: str) -> VectordbConfig:
@@ -50,7 +53,9 @@ class VectordbBase(ABC):
         raise NotImplementedError
 
     def load(self, config: VectordbConfig, embedder: Embeddings) -> Self:
-        logger.debug(f"Loading vectordb {self.vectordb_type} from {config.vectordb_folder_path}")
+        logger.debug(
+            f"Loading vectordb {self.vectordb_type} from {config.vectordb_folder_path}"
+        )
         # get docs from vector db
         # self.docs = self.vector_db.get_by_ids(config.docs_ids)
         self.embedder = embedder
@@ -63,6 +68,6 @@ class VectordbBase(ABC):
 
     def get_all_ids(self) -> List[str]:
         """Get all document IDs from the vector store."""
-        if hasattr(self.vector_db, 'docstore'):
+        if hasattr(self.vector_db, "docstore"):
             return list(self.vector_db.docstore._dict.keys())
         return []

@@ -11,6 +11,7 @@ from core.ai_core.llm.llm_config import LLMName
 
 logger = logging.getLogger("ai_core")
 
+
 class EmbedderBase(ABC):
     supported_embedder: list[EmbedderType]
     embedder: Embeddings | None

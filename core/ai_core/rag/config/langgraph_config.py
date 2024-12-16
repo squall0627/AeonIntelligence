@@ -7,12 +7,17 @@ from langchain_core.tools import BaseTool
 from langgraph.graph import START, END
 
 from core.ai_core.base_config import AIBaseConfig
-from core.ai_core.llm_tools.tools_factory import LLMToolFactory, TOOLS_CATEGORIES, TOOLS_LISTS
+from core.ai_core.llm_tools.tools_factory import (
+    LLMToolFactory,
+    TOOLS_CATEGORIES,
+    TOOLS_LISTS,
+)
 
 
 class SpecialEdges(str, Enum):
     start = "START"
     end = "END"
+
 
 class ConditionalEdgeConfig(AIBaseConfig):
     routing_function: str
@@ -35,6 +40,7 @@ class ConditionalEdgeConfig(AIBaseConfig):
                     self.conditions[index] = END
                 elif value == SpecialEdges.start:
                     self.conditions[index] = START
+
 
 class NodeConfig(AIBaseConfig):
     name: str
@@ -67,6 +73,7 @@ class NodeConfig(AIBaseConfig):
                     self.edges[i] = START
                 elif edge == SpecialEdges.end:
                     self.edges[i] = END
+
 
 class WorkflowConfig(AIBaseConfig):
     name: str | None = None

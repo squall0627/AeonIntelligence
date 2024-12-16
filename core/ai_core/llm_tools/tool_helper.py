@@ -16,11 +16,13 @@ class ToolsCategory(AIBaseConfig):
         super().__init__(**data)
         self.name = self.name.lower()
 
+
 class ToolWrapper:
     def __init__(self, tool: BaseTool, format_input: Callable, format_output: Callable):
         self.tool = tool
         self.format_input = format_input
         self.format_output = format_output
+
 
 class ToolRegistry:
     def __init__(self):

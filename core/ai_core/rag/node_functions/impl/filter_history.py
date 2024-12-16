@@ -5,18 +5,25 @@ from langchain_core.vectorstores import VectorStore
 from core.ai_core.llm import LLMEndpoint
 from core.ai_core.rag.config.ai_rag_config import RetrievalConfig
 from core.ai_core.rag.entities.chat import ChatHistory
-from core.ai_core.rag.node_functions.node_function_base import NodeFunctionBase, AgentState
+from core.ai_core.rag.node_functions.node_function_base import (
+    NodeFunctionBase,
+    AgentState,
+)
 
 
 class FilterHistory(NodeFunctionBase):
-    name="filter_history"
-    is_async=False
+    name = "filter_history"
+    is_async = False
 
-    def __init__(self,
-                 retrieval_config: RetrievalConfig,
-                 llm: LLMEndpoint,
-                 vector_store: VectorStore | None = None,):
-        super().__init__(retrieval_config=retrieval_config, llm=llm, vector_store=vector_store)
+    def __init__(
+        self,
+        retrieval_config: RetrievalConfig,
+        llm: LLMEndpoint,
+        vector_store: VectorStore | None = None,
+    ):
+        super().__init__(
+            retrieval_config=retrieval_config, llm=llm, vector_store=vector_store
+        )
 
     def run(self, state: AgentState) -> AgentState:
         """
@@ -42,9 +49,9 @@ class FilterHistory(NodeFunctionBase):
                 human_message.content
             ) + self.llm_endpoint.count_tokens(ai_message.content)
             if (
-                    total_tokens + message_tokens
-                    > self.retrieval_config.llm_config.max_context_tokens
-                    or total_pairs >= self.retrieval_config.max_history
+                total_tokens + message_tokens
+                > self.retrieval_config.llm_config.max_context_tokens
+                or total_pairs >= self.retrieval_config.max_history
             ):
                 break
             _chat_history.append(human_message)

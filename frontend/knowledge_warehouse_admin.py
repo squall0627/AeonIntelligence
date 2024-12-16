@@ -9,29 +9,32 @@ from typing import List
 
 from frontend.authentication import get_user_specific_key
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.ai_core.knowledge_warehouse.knowledge_warehouse import KnowledgeWarehouse
 from core.ai_core.storage.storage_builder import StorageBuilder, StorageType
 from core.ai_core.files.file import AIFile
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 ### import nest_asyncio ###
 nest_asyncio.apply()
 
+
 def upload_to_temp_dir(files) -> List[str]:
     file_paths = []
     temp_dir = tempfile.mkdtemp()  # Create a temporary directory
-    
+
     for file in files:
         # Use original filename in the temp directory
         temp_path = os.path.join(temp_dir, file.name)
-        with open(temp_path, 'wb') as f:
+        with open(temp_path, "wb") as f:
             f.write(file.getbuffer())
         file_paths.append(temp_path)
-    
+
     return file_paths
+
 
 def delete_temp_files(file_paths: List[str]):
     if file_paths:
@@ -43,6 +46,7 @@ def delete_temp_files(file_paths: List[str]):
         # Remove the temporary directory
         os.rmdir(temp_dir)
 
+
 def save_knowledge_warehouse(kw: KnowledgeWarehouse):
     try:
         loop = asyncio.get_running_loop()
@@ -51,9 +55,17 @@ def save_knowledge_warehouse(kw: KnowledgeWarehouse):
         asyncio.set_event_loop(loop)
 
     try:
-        loop.run_until_complete(kw.save(os.path.join(os.getenv("LOCAL_KNOWLEDGE_WAREHOUSE_PATH"), st.session_state.login_user_id)))
+        loop.run_until_complete(
+            kw.save(
+                os.path.join(
+                    os.getenv("LOCAL_KNOWLEDGE_WAREHOUSE_PATH"),
+                    st.session_state.login_user_id,
+                )
+            )
+        )
     except Exception as e:
         st.error(f"Error saving knowledge warehouse: {str(e)}")
+
 
 def create_knowledge_warehouse(name: str, files, storage_path: str):
     try:
@@ -68,15 +80,15 @@ def create_knowledge_warehouse(name: str, files, storage_path: str):
 
         try:
             # Create knowledge warehouse
-            kw = loop.run_until_complete(KnowledgeWarehouse.afrom_files(
-            name=name,
-            file_paths=file_paths,
-            storage=StorageBuilder.build_storage(
-                StorageType.LocalStorage,
-                storage_path,
-                True
+            kw = loop.run_until_complete(
+                KnowledgeWarehouse.afrom_files(
+                    name=name,
+                    file_paths=file_paths,
+                    storage=StorageBuilder.build_storage(
+                        StorageType.LocalStorage, storage_path, True
+                    ),
+                )
             )
-            ))
         except Exception as e:
             st.error(f"Error creating knowledge warehouse: {str(e)}")
             return False
@@ -87,16 +99,21 @@ def create_knowledge_warehouse(name: str, files, storage_path: str):
         # Save knowledge warehouse
         save_knowledge_warehouse(kw)
 
-        knowledge_warehouses_key = get_user_specific_key("knowledge_warehouses", st.session_state.login_user_id)
-        selected_knowledge_warehouse_key = get_user_specific_key("selected_knowledge_warehouse", st.session_state.login_user_id)
+        knowledge_warehouses_key = get_user_specific_key(
+            "knowledge_warehouses", st.session_state.login_user_id
+        )
+        selected_knowledge_warehouse_key = get_user_specific_key(
+            "selected_knowledge_warehouse", st.session_state.login_user_id
+        )
 
         st.session_state[knowledge_warehouses_key][kw.kw_id] = kw
         st.session_state[selected_knowledge_warehouse_key] = kw
-    
+
         return True
     except Exception as e:
         st.error(f"Error creating knowledge warehouse: {str(e)}")
         return False
+
 
 def get_knowledge_warehouse_files(kw: KnowledgeWarehouse):
     try:
@@ -105,6 +122,7 @@ def get_knowledge_warehouse_files(kw: KnowledgeWarehouse):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
     return loop.run_until_complete(kw.storage.get_files())
+
 
 def delete_file(kw: KnowledgeWarehouse, file: AIFile):
     try:
@@ -115,6 +133,7 @@ def delete_file(kw: KnowledgeWarehouse, file: AIFile):
     loop.run_until_complete(kw.delete_file(file))
     # save knowledge warehouse
     save_knowledge_warehouse(kw)
+
 
 def add_files_to_knowledge_warehouse(kw: KnowledgeWarehouse, files) -> bool:
     try:
@@ -144,6 +163,7 @@ def add_files_to_knowledge_warehouse(kw: KnowledgeWarehouse, files) -> bool:
         st.error(f"Error adding files: {str(e)}")
         return False
 
+
 async def delete_knowledge_warehouse(kw: KnowledgeWarehouse) -> bool:
     try:
         try:
@@ -155,8 +175,12 @@ async def delete_knowledge_warehouse(kw: KnowledgeWarehouse) -> bool:
         # Delete the knowledge warehouse
         loop.run_until_complete(kw.delete())
 
-        knowledge_warehouses_key = get_user_specific_key("knowledge_warehouses", st.session_state.login_user_id)
-        selected_knowledge_warehouse_key = get_user_specific_key("selected_knowledge_warehouse", st.session_state.login_user_id)
+        knowledge_warehouses_key = get_user_specific_key(
+            "knowledge_warehouses", st.session_state.login_user_id
+        )
+        selected_knowledge_warehouse_key = get_user_specific_key(
+            "selected_knowledge_warehouse", st.session_state.login_user_id
+        )
 
         # Remove from session state
         if knowledge_warehouses_key in st.session_state:
@@ -169,23 +193,27 @@ async def delete_knowledge_warehouse(kw: KnowledgeWarehouse) -> bool:
         st.error(f"Error deleting knowledge warehouse: {str(e)}")
         return False
 
+
 def render_knowledge_warehouse_admin():
     st.title("Knowledge Warehouse Administration")
-    
+
     # Create new knowledge warehouse section
     st.header("Create New Knowledge Warehouse")
     with st.form("new_kw_form"):
         kw_name = st.text_input("Knowledge Warehouse Name")
         # storage_path = st.text_input("Storage Path", value="./knowledge_warehouse_storage")
-        storage_path = os.path.join(os.getenv("LOCAL_KNOWLEDGE_WAREHOUSE_STORAGE_PATH"), st.session_state.login_user_id)
-        uploaded_files = st.file_uploader(
-            "Upload Knowledge Files", 
-            accept_multiple_files=True,
-            type=["txt", "pdf", "doc", "docx", "csv"]
+        storage_path = os.path.join(
+            os.getenv("LOCAL_KNOWLEDGE_WAREHOUSE_STORAGE_PATH"),
+            st.session_state.login_user_id,
         )
-        
+        uploaded_files = st.file_uploader(
+            "Upload Knowledge Files",
+            accept_multiple_files=True,
+            type=["txt", "pdf", "doc", "docx", "csv"],
+        )
+
         submit = st.form_submit_button("Create Knowledge Warehouse")
-        
+
         if submit and kw_name and uploaded_files:
             os.makedirs(storage_path, exist_ok=True)
             if create_knowledge_warehouse(kw_name, uploaded_files, storage_path):
@@ -194,7 +222,9 @@ def render_knowledge_warehouse_admin():
     # Display existing knowledge warehouses
     st.header("Existing Knowledge Warehouses")
 
-    knowledge_warehouses_key = get_user_specific_key("knowledge_warehouses", st.session_state.login_user_id)
+    knowledge_warehouses_key = get_user_specific_key(
+        "knowledge_warehouses", st.session_state.login_user_id
+    )
     if knowledge_warehouses_key in st.session_state:
         for kw in st.session_state[knowledge_warehouses_key].values():
             with st.expander(f"📚 {kw.name}"):
@@ -203,9 +233,9 @@ def render_knowledge_warehouse_admin():
                     "Add Files",
                     accept_multiple_files=True,
                     type=["txt", "pdf", "doc", "docx", "csv"],
-                    key=f"upload_{kw.kw_id}"
+                    key=f"upload_{kw.kw_id}",
                 )
-                
+
                 if uploaded_files:
                     if st.button("Add Files", key=f"add_files_{kw.kw_id}"):
                         if add_files_to_knowledge_warehouse(kw, uploaded_files):
@@ -220,14 +250,14 @@ def render_knowledge_warehouse_admin():
                         col1, col2 = st.columns([0.5, 1])
                         with col1:
                             # File download button
-                            with open(file.path, 'rb') as f:
+                            with open(file.path, "rb") as f:
                                 file_bytes = f.read()
                             st.download_button(
                                 label=f"📄 {file.original_filename}",
                                 data=file_bytes,
                                 file_name=file.original_filename,
                                 mime="application/octet-stream",
-                                key=f"download_{file.file_id}"
+                                key=f"download_{file.file_id}",
                             )
                         with col2:
                             # Delete file button
@@ -236,17 +266,27 @@ def render_knowledge_warehouse_admin():
                                 st.rerun()
                 else:
                     st.write("No files in this knowledge warehouse")
-                
+
                 # Add delete button with confirmation
-                if st.button("Delete Knowledge Warehouse", key=f"delete_{kw.kw_id}", type="secondary"):
+                if st.button(
+                    "Delete Knowledge Warehouse",
+                    key=f"delete_{kw.kw_id}",
+                    type="secondary",
+                ):
                     st.session_state[f"confirm_delete_{kw.kw_id}"] = True
-                        
+
                 # Show confirmation dialog
                 if st.session_state.get(f"confirm_delete_{kw.kw_id}", False):
-                    st.warning(f"Are you sure you want to delete '{kw.name}'? This action cannot be undone.")
+                    st.warning(
+                        f"Are you sure you want to delete '{kw.name}'? This action cannot be undone."
+                    )
                     col1, col2 = st.columns([0.2, 1])
                     with col1:
-                        if st.button("Yes, delete it", key=f"confirm_yes_{kw.kw_id}", type="primary"):
+                        if st.button(
+                            "Yes, delete it",
+                            key=f"confirm_yes_{kw.kw_id}",
+                            type="primary",
+                        ):
                             if asyncio.run(delete_knowledge_warehouse(kw)):
                                 st.success("Knowledge warehouse deleted successfully!")
                                 st.rerun()
@@ -257,7 +297,8 @@ def render_knowledge_warehouse_admin():
     else:
         st.write("No knowledge warehouses found")
 
-    st.markdown("""
+    st.markdown(
+        """
     <style>
         /* Style download buttons to look like links */
         .stDownloadButton > button {
@@ -273,7 +314,10 @@ def render_knowledge_warehouse_admin():
             color: #357abd;
         }
     </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
+
 
 # if __name__ == "__main__":
 #     render_knowledge_warehouse_admin()

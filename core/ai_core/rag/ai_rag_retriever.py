@@ -3,8 +3,8 @@ from langchain_core.vectorstores import VectorStore
 
 class AIRagRetriever:
     def __init__(
-            self,
-            vector_store: VectorStore | None = None,
+        self,
+        vector_store: VectorStore | None = None,
     ):
         self.vector_store = vector_store
 

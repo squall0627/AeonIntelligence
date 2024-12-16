@@ -19,6 +19,7 @@ known_embedders: EmbedderMapping = {
     EmbedderType.OllamaEmbeddings: "core.ai_core.embedder.impl.ollama_embeddings.OllamaEmbedder",
 }
 
+
 def get_embedder_class(embedder_type: EmbedderType | str) -> Type[EmbedderBase]:
     if embedder_type not in registry:
         if embedder_type not in known_embedders:
@@ -36,6 +37,7 @@ def get_embedder_class(embedder_type: EmbedderType | str) -> Type[EmbedderBase]:
 
     cls = registry[embedder_type]
     return cls
+
 
 def _import_class(full_mod_path: str):
     if ":" in full_mod_path:

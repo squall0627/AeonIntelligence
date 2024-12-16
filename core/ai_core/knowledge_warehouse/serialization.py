@@ -16,32 +16,38 @@ class EmbedderConfig(BaseModel):
     llm_name: LLMName
     config: Dict[str, Any]
 
+
 class FAISSConfig(BaseModel):
-    vectordb_type: Literal[VectordbType.FaissCPU, VectordbType.FaissGPU] = VectordbType.FaissCPU
+    vectordb_type: Literal[VectordbType.FaissCPU, VectordbType.FaissGPU] = (
+        VectordbType.FaissCPU
+    )
     vectordb_folder_path: str
 
+
 VectordbConfig: TypeAlias = Union[FAISSConfig]
+
 
 class LocalStorageConfig(BaseModel):
     storage_type: Literal[StorageType.LocalStorage] = StorageType.LocalStorage
     storage_path: Path
     files: dict[UUID, AIFileSerialized]
 
+
 class TransparentStorageConfig(BaseModel):
-    storage_type: Literal[StorageType.TransparentStorage] = StorageType.TransparentStorage
+    storage_type: Literal[StorageType.TransparentStorage] = (
+        StorageType.TransparentStorage
+    )
     files: dict[UUID, AIFileSerialized]
 
+
 StorageConfig: TypeAlias = Union[TransparentStorageConfig, LocalStorageConfig]
+
 
 class KWSerialized(BaseModel):
     kw_id: UUID
     kw_name: str
     chat_history: list[ChatMessage]
-    vectordb_config: VectordbConfig = Field(
-        ..., discriminator="vectordb_type"
-    )
-    storage_config: StorageConfig = Field(
-        ..., discriminator="storage_type"
-    )
+    vectordb_config: VectordbConfig = Field(..., discriminator="vectordb_type")
+    storage_config: StorageConfig = Field(..., discriminator="storage_type")
     llm_config: LLMEndpointConfig
     embedding_config: EmbedderConfig

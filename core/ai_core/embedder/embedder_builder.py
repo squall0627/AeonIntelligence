@@ -8,6 +8,7 @@ from core.ai_core.llm.llm_config import DEFAULT_LLM_NAME, LLMName
 
 logger = logging.getLogger("ai_core")
 
+
 class EmbedderBuilder:
 
     @classmethod
@@ -15,10 +16,11 @@ class EmbedderBuilder:
         return cls.build_embedder(default_embedder_type(), DEFAULT_LLM_NAME)
 
     @classmethod
-    def build_embedder(cls, embedder_type: EmbedderType, llm_name: LLMName) -> EmbedderBase:
+    def build_embedder(
+        cls, embedder_type: EmbedderType, llm_name: LLMName
+    ) -> EmbedderBase:
         embedder_cls = get_embedder_class(embedder_type)
         return embedder_cls().build(llm_name)
-
 
     @classmethod
     def load_embedder(cls, config: EmbedderConfig) -> EmbedderBase:

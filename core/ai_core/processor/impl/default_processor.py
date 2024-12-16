@@ -2,9 +2,21 @@ import tiktoken
 
 from typing import Any, List, Type, TypeVar
 
-from langchain_community.document_loaders import CSVLoader, TextLoader, Docx2txtLoader, UnstructuredExcelLoader, \
-    UnstructuredPowerPointLoader, UnstructuredMarkdownLoader, UnstructuredEPubLoader, BibtexLoader, \
-    UnstructuredODTLoader, UnstructuredHTMLLoader, PythonLoader, NotebookLoader, UnstructuredPDFLoader
+from langchain_community.document_loaders import (
+    CSVLoader,
+    TextLoader,
+    Docx2txtLoader,
+    UnstructuredExcelLoader,
+    UnstructuredPowerPointLoader,
+    UnstructuredMarkdownLoader,
+    UnstructuredEPubLoader,
+    BibtexLoader,
+    UnstructuredODTLoader,
+    UnstructuredHTMLLoader,
+    PythonLoader,
+    NotebookLoader,
+    UnstructuredPDFLoader,
+)
 from langchain_core.documents import Document
 from langchain_community.document_loaders.base import BaseLoader
 from langchain_text_splitters import TextSplitter, RecursiveCharacterTextSplitter
@@ -15,8 +27,9 @@ from core.ai_core.processor.splitter import SplitterConfig
 
 P = TypeVar("P", bound=BaseLoader)
 
+
 def _build_processor(
-        cls_name: str, load_cls: Type[P], cls_extensions: List[FileExtension | str]
+    cls_name: str, load_cls: Type[P], cls_extensions: List[FileExtension | str]
 ) -> type:
     enc = tiktoken.get_encoding("cl100k_base")
 
@@ -24,10 +37,10 @@ def _build_processor(
         supported_extensions = cls_extensions
 
         def __init__(
-                self,
-                splitter: TextSplitter | None = None,
-                splitter_config: SplitterConfig = SplitterConfig(),
-                **loader_kwargs: dict[str, Any],
+            self,
+            splitter: TextSplitter | None = None,
+            splitter_config: SplitterConfig = SplitterConfig(),
+            **loader_kwargs: dict[str, Any],
         ) -> None:
             self.loader_cls = load_cls
             self.loader_kwargs = loader_kwargs
@@ -66,6 +79,7 @@ def _build_processor(
             }
 
     return type(cls_name, (ProcessorBase,), dict(_Processor.__dict__))
+
 
 CSVProcessor = _build_processor("CSVProcessor", CSVLoader, [FileExtension.csv])
 TikTokenTxtProcessor = _build_processor(

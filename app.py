@@ -20,7 +20,7 @@ from frontend.authentication import get_user_specific_key
 from frontend.knowledge_warehouse_admin import render_knowledge_warehouse_admin
 from frontend.login import render_login_page
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.ai_core.rag.entities.models import ParsedRAGResponse
 from core.ai_core.knowledge_warehouse import KnowledgeWarehouse
 
@@ -43,7 +43,7 @@ from io import BytesIO
 def get_knowledge_warehouses_paths(user_id: str):
     base_path = os.path.join(os.getenv("LOCAL_KNOWLEDGE_WAREHOUSE_PATH"), user_id)
     kw_paths = []
-    
+
     # Check if path exists
     if os.path.exists(base_path):
         # Get only immediate subdirectories
@@ -51,8 +51,9 @@ def get_knowledge_warehouses_paths(user_id: str):
             full_path = os.path.join(base_path, item)
             if os.path.isdir(full_path):  # Check if it's a directory
                 kw_paths.append(full_path)
-    
+
     return kw_paths
+
 
 # Modify the session state initialization
 def initialize_session_state(user_id: str):
@@ -60,11 +61,11 @@ def initialize_session_state(user_id: str):
     chat_answers_history_key = get_user_specific_key("chat_answers_history", user_id)
     if chat_answers_history_key not in st.session_state:
         st.session_state[chat_answers_history_key] = []
-        
+
     user_prompt_history_key = get_user_specific_key("user_prompt_history", user_id)
     if user_prompt_history_key not in st.session_state:
         st.session_state[user_prompt_history_key] = []
-        
+
     chat_history_key = get_user_specific_key("chat_history", user_id)
     if chat_history_key not in st.session_state:
         st.session_state[chat_history_key] = []
@@ -77,7 +78,7 @@ def initialize_session_state(user_id: str):
     feedback_given_key = get_user_specific_key("feedback_given", user_id)
     if feedback_given_key not in st.session_state:
         st.session_state[feedback_given_key] = {}
-    
+
     # initialize knowledge warehouse
     knowledge_warehouses_key = get_user_specific_key("knowledge_warehouses", user_id)
     if knowledge_warehouses_key not in st.session_state:
@@ -88,9 +89,12 @@ def initialize_session_state(user_id: str):
             st.session_state[knowledge_warehouses_key][kw.kw_id] = kw
 
     # initialize selected knowledge warehouse
-    selected_knowledge_warehouse_key = get_user_specific_key("selected_knowledge_warehouse", user_id)
+    selected_knowledge_warehouse_key = get_user_specific_key(
+        "selected_knowledge_warehouse", user_id
+    )
     if selected_knowledge_warehouse_key not in st.session_state:
         st.session_state[selected_knowledge_warehouse_key] = None
+
 
 # Add this function to get a profile picture
 def get_profile_picture(email):
@@ -215,7 +219,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown("""
+st.markdown(
+    """
 <style>
     /* Button styling */
     .stButton > button {
@@ -238,10 +243,13 @@ st.markdown("""
         margin-bottom: 0.5rem;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # Add to your custom CSS section
-st.markdown("""
+st.markdown(
+    """
 <style>
     /* Make dropdown more compact */
     .stSelectbox {
@@ -253,9 +261,12 @@ st.markdown("""
         padding: 2px;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-st.markdown("""
+st.markdown(
+    """
 <style>
     /* Align submit button vertically */
     .stButton {
@@ -270,17 +281,19 @@ st.markdown("""
         padding-bottom: 3px;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
 def main():
 
     initialize_auth_state()
-    
+
     if not st.session_state.authenticated:
         render_login_page()
         return
-    
+
     user_id = st.session_state.login_user_id
 
     if "needs_rerun" in st.session_state and st.session_state.needs_rerun:
@@ -296,7 +309,9 @@ def main():
     feedback_given_key = get_user_specific_key("feedback_given", user_id)
     feedback_counts_key = get_user_specific_key("feedback_counts", user_id)
     knowledge_warehouses_key = get_user_specific_key("knowledge_warehouses", user_id)
-    selected_knowledge_warehouse_key = get_user_specific_key("selected_knowledge_warehouse", user_id)
+    selected_knowledge_warehouse_key = get_user_specific_key(
+        "selected_knowledge_warehouse", user_id
+    )
 
     def on_knowledge_warehouse_change():
         # Clear chat history when switching knowledge warehouse
@@ -307,9 +322,11 @@ def main():
 
         # clear chat history in selected knowledge warehouse
         st.session_state[selected_knowledge_warehouse_key].default_chat = []
-        
+
         # Update selected knowledge warehouse
-        kw_options = {kw.name: kw for kw in st.session_state[knowledge_warehouses_key].values()}
+        kw_options = {
+            kw.name: kw for kw in st.session_state[knowledge_warehouses_key].values()
+        }
         selected_kw_name = st.session_state.kw_selector
         kw = kw_options[selected_kw_name]
         st.session_state[selected_knowledge_warehouse_key] = kw
@@ -334,7 +351,9 @@ def main():
             regenerate_prompt = st.session_state[user_prompt_history_key][prompt_index]
             with st.spinner("Regenerating response..."):
                 response = ask(regenerate_prompt)
-                st.session_state[chat_answers_history_key][prompt_index] = response.answer
+                st.session_state[chat_answers_history_key][
+                    prompt_index
+                ] = response.answer
                 st.session_state[feedback_given_key][prompt_index] = None
                 st.session_state.needs_rerun = True
 
@@ -367,10 +386,7 @@ def main():
 
     # Add this to your sidebar or main content
     st.sidebar.title("Navigation")
-    page = st.sidebar.selectbox(
-        "Choose a page", 
-        ["Chat", "Knowledge Warehouse"]
-    )
+    page = st.sidebar.selectbox("Choose a page", ["Chat", "Knowledge Warehouse"])
 
     # When the login user does not have any knowledge warehouse, show the knowledge warehouse admin page
     if len(st.session_state[knowledge_warehouses_key]) == 0:
@@ -390,18 +406,28 @@ def main():
             prompt = st.text_input("質問", placeholder="Enter your message here...")
         with col2:
             # Add dropdown for knowledge warehouse selection
-            kw_options = {kw.name: kw for kw in st.session_state[knowledge_warehouses_key].values()}
+            kw_options = {
+                kw.name: kw
+                for kw in st.session_state[knowledge_warehouses_key].values()
+            }
             # Use the stored value as index if it exists
-            index = list(kw_options.keys()).index(st.session_state[selected_knowledge_warehouse_key].name) \
-                if st.session_state[selected_knowledge_warehouse_key] and st.session_state[selected_knowledge_warehouse_key].name in kw_options else 0
+            index = (
+                list(kw_options.keys()).index(
+                    st.session_state[selected_knowledge_warehouse_key].name
+                )
+                if st.session_state[selected_knowledge_warehouse_key]
+                and st.session_state[selected_knowledge_warehouse_key].name
+                in kw_options
+                else 0
+            )
             selected_kw_name = st.selectbox(
                 "知識倉庫",
                 options=list(kw_options.keys()),
                 key="kw_selector",
                 index=index,
-                on_change=on_knowledge_warehouse_change
+                on_change=on_knowledge_warehouse_change,
             )
-            
+
             # Update selected knowledge warehouse
             kw = kw_options[selected_kw_name]
             st.session_state[selected_knowledge_warehouse_key] = kw
@@ -413,45 +439,67 @@ def main():
                     with st.spinner("Generating response..."):
                         generated_response = ask(prompt)
                         st.session_state[user_prompt_history_key].append(prompt)
-                        st.session_state[chat_answers_history_key].append(generated_response.answer)
+                        st.session_state[chat_answers_history_key].append(
+                            generated_response.answer
+                        )
                         st.session_state[chat_history_key].append(("human", prompt))
-                        st.session_state[chat_history_key].append(("ai", generated_response.answer))
-        st.markdown('</div>', unsafe_allow_html=True)
+                        st.session_state[chat_history_key].append(
+                            ("ai", generated_response.answer)
+                        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
         # Chat messages container
         with st.container():
             if st.session_state[chat_answers_history_key]:
-                for idx, (generated_response, user_query) in enumerate(zip(
+                for idx, (generated_response, user_query) in enumerate(
+                    zip(
                         st.session_state[chat_answers_history_key],
                         st.session_state[user_prompt_history_key],
-                )):
+                    )
+                ):
                     message(user_query, is_user=True, key=f"user_{uuid4()}")
                     message(generated_response, key=f"bot_{idx}")
-                    
+
                     # Get feedback status for this message
                     feedback = st.session_state[feedback_given_key].get(idx)
 
                     # Buttons in horizontal row
                     cols = st.columns([0.82, 0.045, 0.045, 0.045, 0.045])
                     with cols[1]:
-                        st.button("🔄", key=f"regen_{idx}", help="Regenerate", on_click=lambda: regenerate_response(idx))
+                        st.button(
+                            "🔄",
+                            key=f"regen_{idx}",
+                            help="Regenerate",
+                            on_click=lambda: regenerate_response(idx),
+                        )
                     with cols[2]:
-                        st.button("📋", key=f"copy_{idx}", help="Copy", on_click=lambda: copy_to_clipboard(generated_response))
+                        st.button(
+                            "📋",
+                            key=f"copy_{idx}",
+                            help="Copy",
+                            on_click=lambda: copy_to_clipboard(generated_response),
+                        )
                     with cols[3]:
-                        st.button("👍", 
-                                    key=f"good_{idx}", 
-                                    help="Good",
-                                    disabled=feedback is not None,  # Disable if any feedback given
-                                    type="primary" if feedback == "good" else "secondary",
-                                    on_click=lambda index=idx: update_feedback(index, "good"))
+                        st.button(
+                            "👍",
+                            key=f"good_{idx}",
+                            help="Good",
+                            disabled=feedback
+                            is not None,  # Disable if any feedback given
+                            type="primary" if feedback == "good" else "secondary",
+                            on_click=lambda index=idx: update_feedback(index, "good"),
+                        )
                     with cols[4]:
-                        st.button("👎", 
-                                    key=f"bad_{idx}", 
-                                    help="Bad",
-                                    disabled=feedback is not None,  # Disable if any feedback given
-                                    type="primary" if feedback == "bad" else "secondary",
-                                    on_click=lambda index=idx: update_feedback(index, "bad"))
-                        
+                        st.button(
+                            "👎",
+                            key=f"bad_{idx}",
+                            help="Bad",
+                            disabled=feedback
+                            is not None,  # Disable if any feedback given
+                            type="primary" if feedback == "bad" else "secondary",
+                            on_click=lambda index=idx: update_feedback(index, "bad"),
+                        )
+
         # Add a footer
         st.markdown("---")
         st.markdown("Powered by LangChain and Streamlit")
@@ -459,6 +507,7 @@ def main():
 
     elif page == "Knowledge Warehouse":
         render_knowledge_warehouse_admin()
+
 
 if __name__ == "__main__":
     main()
