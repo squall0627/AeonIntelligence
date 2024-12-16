@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.aeon.intelligence.gunicorn</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/squall/.local/share/virtualenvs/AeonIntelligence-FPzeDT1W/bin/gunicorn</string>
+		<string>-c</string>
+		<string>gunicorn_config_api.py</string>
+		<string>--enable-stdio-inheritance</string>
+		<string>api.translator_app:translator_app</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/squall/PycharmProjects/AeonIntelligence</string>
+	<key>StandardOutPath</key>
+	<string>/Users/squall/Logs/AeonIntelligence/api/gunicorn.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/squall/Logs/AeonIntelligence/api/gunicorn_error.log</string>
+	<key>KeepAlive</key>
+	<true/>
+	<key>RunAtLoad</key>
+	<true/>
+</dict>
+</plist>
