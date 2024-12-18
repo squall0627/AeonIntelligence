@@ -27,6 +27,11 @@ unstructured = "*"
 pillow-heif = "*"
 flask = "*"
 gunicorn = "*"
+mammoth = "*"
+markdownify = "*"
+python-pptx = "*"
+puremagic = "*"
+youtube-transcript-api = "*"
 
 [dev-packages]
 

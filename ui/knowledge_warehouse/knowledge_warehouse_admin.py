@@ -115,9 +115,9 @@ def create_knowledge_warehouse(name: str, files, storage_path: str):
         except Exception as e:
             st.error(f"Error creating knowledge warehouse: {str(e)}")
             return False
-
-        # Clean up temp files
-        delete_temp_files(file_paths)
+        finally:
+            # Clean up temp files
+            delete_temp_files(file_paths)
 
         # Save knowledge warehouse
         save_knowledge_warehouse(kw)
@@ -168,9 +168,9 @@ def add_files_to_knowledge_warehouse(kw: KnowledgeWarehouse, files) -> bool:
         except Exception as e:
             st.error(f"Error adding files: {str(e)}")
             return False
-
-        # Clean up temp files
-        delete_temp_files(file_paths)
+        finally:
+            # Clean up temp files
+            delete_temp_files(file_paths)
 
         # Save knowledge warehouse
         save_knowledge_warehouse(kw)

@@ -23,12 +23,12 @@ def default_translate_llm() -> LLMEndpoint:
         raise ImportError("Please provide a valid BaseLLM") from e
 
 
-class Translator:
+class TextTranslator:
     def __init__(
         self,
         source_language: Language | str,
         target_language: Language | str,
-        keywords_map: dict | None,
+        keywords_map: dict | None = None,
         llm: LLMEndpoint | None = None,
     ):
         self.source_language = (
