@@ -1,4 +1,5 @@
-import logging
+import stopwatch
+import asyncio
 
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -20,6 +21,7 @@ class FileTranslatorBase(ABC):
     target_language: Language | str
     keywords_map: dict | None
     text_translator: TextTranslator
+    kwargs: dict | None = {}
 
     def __init__(
         self,
@@ -27,8 +29,22 @@ class FileTranslatorBase(ABC):
     ):
         self.file_translator_type = file_translator_type
 
+    async def atranslate(self, output_dir: Path | str) -> (Path | str, int):
+        sw = stopwatch.Stopwatch()
+        sw.start()
+
+        output_file_path = await self.translate_impl(output_dir)
+
+        sw.stop()
+        duration = sw.duration
+        logger.info(f"Translation completed in {duration:.2f} seconds")
+        return output_file_path, duration
+
+    def translate(self, output_dir: Path | str) -> (Path | str, int):
+        return asyncio.run(self.atranslate(output_dir))
+
     @abstractmethod
-    def translate(self, output_dir: Path | str) -> Path | str:
+    async def translate_impl(self, output_dir: Path | str) -> Path | str:
         raise NotImplementedError
 
     def build(
@@ -36,7 +52,9 @@ class FileTranslatorBase(ABC):
         input_file_path: Path | str,
         source_language: Language | str,
         target_language: Language | str,
+        *,
         keywords_map: dict | None = None,
+        **kwargs,
     ) -> Self:
         logger.debug(f"Building File translator for {self.file_translator_type}")
         self.input_file_path = input_file_path
@@ -54,4 +72,5 @@ class FileTranslatorBase(ABC):
         self.text_translator = TextTranslator(
             source_language, target_language, keywords_map
         )
+        self.kwargs = kwargs
         return self

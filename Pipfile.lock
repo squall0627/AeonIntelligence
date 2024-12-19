@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "3ddbce5838126bb800e1e75b275da384782a1226575b62f5942e4c000a32f8c2"
+            "sha256": "595f46e344a9141b73dc8d0931e7a6549b5ca81d4c7950aa27e4204df3225998"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -2899,6 +2899,14 @@
                 "sha256:d5558e0c25a4cb0853cddad3d77da9891a08cb85dd9f9f91b9f8cd66e511e695"
             ],
             "version": "==0.6.3"
+        },
+        "stopwatch.py": {
+            "hashes": [
+                "sha256:5802a0178d766120c11dd5df8ae838e9beccb8c88329dbd5f0f7ac4b7fed9107",
+                "sha256:8cc94ba0f6469d434eabd8b227166e595fd42350e7f66dbf1a1a80697f60cc79"
+            ],
+            "markers": "python_version >= '3.5'",
+            "version": "==2.0.1"
         },
         "streamlit": {
             "hashes": [

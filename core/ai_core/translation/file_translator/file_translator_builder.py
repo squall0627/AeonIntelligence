@@ -20,7 +20,9 @@ class FileTranslatorBuilder:
         input_file_path: Path | str,
         source_language: Language | str,
         target_language: Language | str,
+        *,
         keywords_map: dict | None = None,
+        **kwargs,
     ) -> FileTranslatorBase:
         # get extension of input file
         _, ext = os.path.splitext(input_file_path)
@@ -34,5 +36,9 @@ class FileTranslatorBuilder:
 
         # build translator class
         return file_translator_cls().build(
-            input_file_path, source_language, target_language, keywords_map
+            input_file_path,
+            source_language,
+            target_language,
+            keywords_map=keywords_map,
+            **kwargs,
         )

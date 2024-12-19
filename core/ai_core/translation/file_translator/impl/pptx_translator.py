@@ -1,10 +1,14 @@
 import os
+
+from enum import Enum
+
+
+from concurrent.futures import ThreadPoolExecutor
 from io import StringIO
 from pathlib import Path
 
 import pptx
 from pptx.enum.text import MSO_AUTO_SIZE
-from pptx.util import Pt
 
 from core.ai_core.translation.file_translator.file_translator_base import (
     FileTranslatorBase,
@@ -28,66 +32,90 @@ _FONT_NAME = {
 _FALLBACK_FONT = "Arial"  # A universal fallback font
 
 
+class TranslationMode(str, Enum):
+    TRANSLATE = "1"
+    EXTRACT = "2"
+    REPLACE = "3"
+
+
+# Function for parallel translation
+def translate_texts(texts, translator):
+    translated_texts = [translator.translate(text) for text in texts]
+    return translated_texts
+
+
 class PPTXTranslator(FileTranslatorBase):
     def __init__(self):
         super().__init__(FileTranslatorType.PPTX)
 
-    def translate(self, output_dir: Path | str) -> Path | str:
+    async def translate_impl(self, output_dir: Path | str) -> Path | str:
         logger.info(
             f"Translating {self.input_file_path} to {output_dir} by PPTXTranslator"
         )
 
+        run_parallely = self.kwargs.get("run_parallely", True)
+        target_slide_index = self.kwargs.get("target_slide_index", None)
+
         text_translator = self.text_translator
-        converter = PptxConverter()
         ppt = pptx.Presentation(self.input_file_path)
 
-        for slide in ppt.slides:
-            for shape in slide.shapes:
-                logger.debug(">>> Translating Pictures")
-                # Pictures
-                if converter._is_picture(shape):
-                    alt_text = ""
-                    try:
-                        alt_text = shape._element._nvXxPr.cNvPr.attrib.get("descr", "")
-                    except Exception:
-                        pass
+        logger.info(
+            f"translating slides {'parallely' if run_parallely else 'sequentially'}"
+        )
+        slide_index = 0
+        if run_parallely:
+            # run parallely
+            target_slides = []
+            for slide in ppt.slides:
+                if target_slide_index is None or slide_index in target_slide_index:
+                    target_slides.append(slide)
 
-                    alt_text_translated = text_translator.translate(alt_text)
-                    shape.image.alt_text = alt_text_translated
+                slide_index += 1
 
-                logger.debug(">>> Translating Tables")
-                # Tables
-                if converter._is_table(shape):
-                    for row in shape.table.rows:
-                        for cell in row.cells:
-                            self._translate_text_with_style(
-                                cell.text_frame, text_translator
-                            )
-                    # adjust font size to adapt to the size of shape
-                    self._adjust_font_size_to_fit_shape(shape)
+            # Extract all slide texts
+            slides_texts = [
+                self._translate_slide(slide, TranslationMode.EXTRACT)
+                for slide in target_slides
+            ]
 
-                logger.debug(">>> Translating Charts")
-                # Charts
-                if shape.has_chart:
-                    chart = shape.chart
-                    # Translate the chart title
-                    if chart.has_title and chart.chart_title.has_text_frame:
-                        self._translate_text_with_style(
-                            chart.chart_title.text_frame, text_translator
-                        )
+            # Translate texts in parallel
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                futures = {}
+                for idx, texts in enumerate(slides_texts):
+                    futures[idx] = {
+                        "task": executor.submit(
+                            translate_texts, texts, text_translator
+                        ),
+                        "status": "pending",
+                    }
 
-                logger.debug(">>> Translating Text Areas")
-                # Text areas
-                if shape.has_text_frame:
-                    text_frame = shape.text_frame
-                    self._translate_text_with_style(text_frame, text_translator)
-                    # adjust font size to adapt to the size of shape
-                    self._adjust_font_size_to_fit_shape(shape)
-
-            if slide.has_notes_slide:
-                notes_frame = slide.notes_slide.notes_text_frame
-                if notes_frame is not None:
-                    self._translate_text_with_style(notes_frame, text_translator)
+                try:
+                    # Gather the results
+                    while sum(
+                        1 for _, future in futures.items() if future["status"] == "done"
+                    ) < len(futures.keys()):
+                        for idx, future_task in futures.items():
+                            if (
+                                future_task["task"].done()
+                                and future_task["status"] == "pending"
+                            ):
+                                translated_texts = future_task["task"].result()
+                                # Replace the translated content back in slides
+                                self._translate_slide(
+                                    target_slides[idx],
+                                    TranslationMode.REPLACE,
+                                    translated_texts,
+                                )
+                                future_task["status"] = "done"
+                except Exception as e:
+                    logger.error(e)
+                    print(e)
+        else:
+            # run sequentially
+            for slide in ppt.slides:
+                if target_slide_index is None or slide_index in target_slide_index:
+                    self._translate_slide(slide, TranslationMode.TRANSLATE)
+                slide_index += 1
 
         logger.debug(">>> Translating input file name")
         # translate the input file name
@@ -102,7 +130,95 @@ class PPTXTranslator(FileTranslatorBase):
 
         return output_path
 
-    def _translate_text_with_style(self, text_frame, text_translator):
+    def _translate_slide(
+        self, slide, mode: TranslationMode, translated_texts: list | None = None
+    ) -> list:
+        text_translator = self.text_translator
+        converter = PptxConverter()
+        is_translate_picture = self.kwargs.get("is_translate_picture", False)
+        extract_texts = []
+        text_idx = 0
+        for shape in slide.shapes:
+            if is_translate_picture:
+                logger.debug(">>> Translating Pictures")
+                # Pictures
+                if converter._is_picture(shape):
+                    alt_text = ""
+                    try:
+                        alt_text = shape._element._nvXxPr.cNvPr.attrib.get("descr", "")
+                    except Exception:
+                        pass
+
+                    if mode == TranslationMode.TRANSLATE:
+                        alt_text_translated = text_translator.translate(alt_text)
+                        shape.image.alt_text = alt_text_translated
+                    elif mode == TranslationMode.EXTRACT:
+                        extract_texts.append(alt_text)
+                    elif mode == TranslationMode.REPLACE:
+                        shape.image.alt_text = translated_texts[text_idx]
+                        text_idx += 1
+
+            logger.debug(">>> Translating Tables")
+            # Tables
+            if converter._is_table(shape):
+                for row in shape.table.rows:
+                    for cell in row.cells:
+                        sub_extract_texts, text_idx = self._translate_text_with_style(
+                            cell.text_frame,
+                            text_translator,
+                            mode,
+                            translated_texts,
+                            text_idx,
+                        )
+                        extract_texts.extend(sub_extract_texts)
+
+                # adjust font size to adapt to the size of shape
+                self._adjust_font_size_to_fit_shape(shape)
+
+            logger.debug(">>> Translating Charts")
+            # Charts
+            if shape.has_chart:
+                chart = shape.chart
+                # Translate the chart title
+                if chart.has_title and chart.chart_title.has_text_frame:
+                    sub_extract_texts, text_idx = self._translate_text_with_style(
+                        chart.chart_title.text_frame,
+                        text_translator,
+                        mode,
+                        translated_texts,
+                        text_idx,
+                    )
+                    extract_texts.extend(sub_extract_texts)
+
+            logger.debug(">>> Translating Text Areas")
+            # Text areas
+            if shape.has_text_frame:
+                text_frame = shape.text_frame
+                sub_extract_texts, text_idx = self._translate_text_with_style(
+                    text_frame, text_translator, mode, translated_texts, text_idx
+                )
+                extract_texts.extend(sub_extract_texts)
+                # adjust font size to adapt to the size of shape
+                self._adjust_font_size_to_fit_shape(shape)
+
+        if slide.has_notes_slide:
+            notes_frame = slide.notes_slide.notes_text_frame
+            if notes_frame is not None:
+                sub_extract_texts, text_idx = self._translate_text_with_style(
+                    notes_frame, text_translator, mode, translated_texts, text_idx
+                )
+                extract_texts.extend(sub_extract_texts)
+
+        return extract_texts
+
+    def _translate_text_with_style(
+        self,
+        text_frame,
+        text_translator,
+        mode: TranslationMode,
+        translated_texts: list,
+        text_idx: int,
+    ) -> (list, int):
         """
         Translates the text inside a PowerPoint shape while preserving styling.
 
@@ -117,6 +233,7 @@ class PPTXTranslator(FileTranslatorBase):
             text_frame.vertical_anchor if text_frame is not None else None
         )
 
+        extract_texts = []
         # Iterate over each paragraph in the text frame
         for paragraph in text_frame.paragraphs:
             alignment = paragraph.alignment
@@ -138,39 +255,52 @@ class PPTXTranslator(FileTranslatorBase):
             if original_text.tell() == 0:
                 continue
 
-            translated_text = text_translator.translate(original_text.getvalue())
-            translated_runs.append((translated_text, paragraph.runs[0].font))
+            if mode == TranslationMode.TRANSLATE or mode == TranslationMode.REPLACE:
+                translated_text = ""
+                if mode == TranslationMode.TRANSLATE:
+                    translated_text = text_translator.translate(
+                        original_text.getvalue()
+                    )
+                elif mode == TranslationMode.REPLACE:
+                    translated_text = translated_texts[text_idx]
+                    text_idx += 1
+                translated_runs.append((translated_text, paragraph.runs[0].font))
 
-            # Clear the paragraph and replace it with translated runs
-            paragraph.clear()  # Remove existing text in the paragraph
-            for translated_text, original_font in translated_runs:
-                new_run = paragraph.add_run()  # Add new run
-                new_run.text = translated_text  # Set the translated text
+                # Clear the paragraph and replace it with translated runs
+                paragraph.clear()  # Remove existing text in the paragraph
+                for translated_text, original_font in translated_runs:
+                    new_run = paragraph.add_run()  # Add new run
+                    new_run.text = translated_text  # Set the translated text
 
-                # Manually copy font properties
-                if original_font is not None:  # Ensure the original font exists
-                    if original_font.name:
-                        new_run.font.name = _FONT_NAME[self.target_language]
-                    if original_font.size:
-                        new_run.font.size = original_font.size
-                    new_run.font.bold = original_font.bold
-                    new_run.font.italic = original_font.italic
-                    new_run.font.underline = original_font.underline
-                    # Safely copy the color if it exists and has the rgb property
-                    if original_font.color and hasattr(original_font.color, "rgb"):
-                        new_run.font.color.rgb = original_font.color.rgb
-                    else:
-                        # Fallback to black color if original color is undefined
-                        from pptx.dml.color import RGBColor
+                    # Manually copy font properties
+                    if original_font is not None:  # Ensure the original font exists
+                        if original_font.name:
+                            new_run.font.name = _FONT_NAME[self.target_language]
+                        if original_font.size:
+                            new_run.font.size = original_font.size
+                        new_run.font.bold = original_font.bold
+                        new_run.font.italic = original_font.italic
+                        new_run.font.underline = original_font.underline
+                        # Safely copy the color if it exists and has the rgb property
+                        if original_font.color and hasattr(original_font.color, "rgb"):
+                            new_run.font.color.rgb = original_font.color.rgb
+                        else:
+                            # Fallback to black color if original color is undefined
+                            from pptx.dml.color import RGBColor
 
-                        new_run.font.color.rgb = RGBColor(0, 0, 0)
+                            new_run.font.color.rgb = RGBColor(0, 0, 0)
 
-            # If the table cell has specific alignments (horizontal or vertical), ensure they are preserved since clearing and reconstructing text may default some alignments.
-            paragraph.alignment = alignment
+                # If the table cell has specific alignments (horizontal or vertical), ensure they are preserved since clearing and reconstructing text may default some alignments.
+                paragraph.alignment = alignment
+            elif mode == TranslationMode.EXTRACT:
+                extract_texts.append(original_text.getvalue())
 
         # Restore the vertical alignment after clearing/replacing text
-        if vertical_alignment:
-            text_frame.vertical_anchor = vertical_alignment
+        if mode == TranslationMode.TRANSLATE or mode == TranslationMode.REPLACE:
+            if vertical_alignment:
+                text_frame.vertical_anchor = vertical_alignment
+
+        return extract_texts, text_idx
 
     def _adjust_font_size_to_fit_shape(self, shape):
         """

@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 ### import nest_asyncio ###
-nest_asyncio.apply()
+# nest_asyncio.apply()
 
 
 def render_style():
@@ -71,14 +71,14 @@ def delete_temp_files(file_paths: List[str]):
 
 
 def save_knowledge_warehouse(kw: KnowledgeWarehouse):
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    # try:
+    #     loop = asyncio.get_running_loop()
+    # except RuntimeError:
+    #     loop = asyncio.new_event_loop()
+    #     asyncio.set_event_loop(loop)
 
     try:
-        loop.run_until_complete(
+        asyncio.run(
             kw.save(
                 os.path.join(
                     os.getenv("LOCAL_KNOWLEDGE_WAREHOUSE_PATH"),
@@ -95,15 +95,15 @@ def create_knowledge_warehouse(name: str, files, storage_path: str):
         # Save uploaded files temporarily
         file_paths = upload_to_temp_dir(files)
 
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+        # try:
+        #     loop = asyncio.get_running_loop()
+        # except RuntimeError:
+        #     loop = asyncio.new_event_loop()
+        #     asyncio.set_event_loop(loop)
 
         try:
             # Create knowledge warehouse
-            kw = loop.run_until_complete(
+            kw = asyncio.run(
                 KnowledgeWarehouse.afrom_files(
                     name=name,
                     file_paths=file_paths,
@@ -132,21 +132,21 @@ def create_knowledge_warehouse(name: str, files, storage_path: str):
 
 
 def get_knowledge_warehouse_files(kw: KnowledgeWarehouse):
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    return loop.run_until_complete(kw.storage.get_files())
+    # try:
+    #     loop = asyncio.get_running_loop()
+    # except RuntimeError:
+    #     loop = asyncio.new_event_loop()
+    #     asyncio.set_event_loop(loop)
+    return asyncio.run(kw.storage.get_files())
 
 
 def delete_file(kw: KnowledgeWarehouse, file: AIFile):
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    loop.run_until_complete(kw.delete_file(file))
+    # try:
+    #     loop = asyncio.get_running_loop()
+    # except RuntimeError:
+    #     loop = asyncio.new_event_loop()
+    #     asyncio.set_event_loop(loop)
+    asyncio.run(kw.delete_file(file))
     # save knowledge warehouse
     save_knowledge_warehouse(kw)
 
@@ -156,15 +156,15 @@ def add_files_to_knowledge_warehouse(kw: KnowledgeWarehouse, files) -> bool:
         # Save uploaded files temporarily
         file_paths = upload_to_temp_dir(files)
 
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+        # try:
+        #     loop = asyncio.get_running_loop()
+        # except RuntimeError:
+        #     loop = asyncio.new_event_loop()
+        #     asyncio.set_event_loop(loop)
 
         try:
             # Add files to existing knowledge warehouse
-            loop.run_until_complete(kw.aadd_files(file_paths))
+            asyncio.run(kw.aadd_files(file_paths))
         except Exception as e:
             st.error(f"Error adding files: {str(e)}")
             return False
@@ -182,14 +182,14 @@ def add_files_to_knowledge_warehouse(kw: KnowledgeWarehouse, files) -> bool:
 
 async def delete_knowledge_warehouse(kw: KnowledgeWarehouse) -> bool:
     try:
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+        # try:
+        #     loop = asyncio.get_running_loop()
+        # except RuntimeError:
+        #     loop = asyncio.new_event_loop()
+        #     asyncio.set_event_loop(loop)
 
         # Delete the knowledge warehouse
-        loop.run_until_complete(kw.delete())
+        asyncio.run(kw.delete())
 
         # Remove from session state
         if knowledge_warehouses_key() in st.session_state:

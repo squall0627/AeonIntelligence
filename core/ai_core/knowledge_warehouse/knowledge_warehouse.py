@@ -380,8 +380,8 @@ class KnowledgeWarehouse:
         skip_file_error: bool = False,
         processor_kwargs: dict[str, Any] | None = None,
     ) -> Self:
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(
+        # loop = asyncio.get_event_loop()
+        return asyncio.run(
             cls.afrom_files(
                 name=name,
                 file_paths=file_paths,
@@ -547,8 +547,8 @@ class KnowledgeWarehouse:
         戻り値:
         - ParsedRAGResponse: 生成された回答。
         """
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(
+        # loop = asyncio.get_event_loop()
+        return asyncio.run(
             self.aask_streaming(
                 question=question,
                 retrieval_config=retrieval_config,

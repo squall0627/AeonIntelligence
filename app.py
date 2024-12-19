@@ -36,7 +36,7 @@ load_dotenv()
 
 
 ### import nest_asyncio ###
-nest_asyncio.apply()
+# nest_asyncio.apply()
 
 
 def render_style():

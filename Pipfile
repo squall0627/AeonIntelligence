@@ -32,6 +32,7 @@ markdownify = "*"
 python-pptx = "*"
 puremagic = "*"
 youtube-transcript-api = "*"
+"stopwatch.py" = "*"
 
 [dev-packages]
 

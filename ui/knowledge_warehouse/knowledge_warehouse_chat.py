@@ -73,14 +73,14 @@ def on_knowledge_warehouse_change():
 
 
 def ask(kw, question) -> ParsedRAGResponse:
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    # try:
+    #     loop = asyncio.get_running_loop()
+    # except RuntimeError:
+    #     loop = asyncio.new_event_loop()
+    #     asyncio.set_event_loop(loop)
 
     try:
-        response = loop.run_until_complete(kw.aask_streaming(question))
+        response = asyncio.run(kw.aask_streaming(question))
         return response
     except Exception as e:
         import traceback
