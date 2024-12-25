@@ -54,7 +54,8 @@ def _define_translation_prompts() -> TranslationPromptsDict:
         " Output Example:\n"
         "　 ・https://example.com/page?lang=zh-CN&token=abc123をアクセスしてください\n"
         "　 ・http://www.figma.com/design/PnRr8GS7yRPrUQJ3thvkij/%E3%80%90V1.5%E3%80%91PM0001_%E3%82%AF%E3%83%BC%E3%83%9D%E3%83%B3%E4%B8%80%E8%A6%A7?node-id=4695-4202&node-type=frame&t=dUI7yNgTJUvhiRD5-0をクリックしないでください\n"
-        "5.DO NOT need to output your reasoning process, ONLY output your Final Translation. \n"
+        # "5.DO NOT need to output your reasoning process, ONLY output your Final Translation. \n"
+        "5.Provide the answer ONLY. DO NOT explain. \n"
         "6.If no text for translation is provided, DO NOT output anything. \n"
         "Take a deep breath, calm down, and start translating.\n\n"
     )

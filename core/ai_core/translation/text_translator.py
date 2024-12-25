@@ -15,7 +15,7 @@ def default_translate_llm() -> LLMEndpoint:
     try:
         llm = LLMEndpoint.from_config(
             LLMEndpointConfig(
-                supplier=DefaultModelSuppliers.ALIBABA, model=LLMName.qwen_32b
+                supplier=DefaultModelSuppliers.ALIBABA, model=LLMName.qwen_2_5_32b
             )
         )
         return llm
@@ -45,7 +45,7 @@ class TextTranslator:
         self.llm = llm if llm else default_translate_llm()
         logger.debug(
             f"Translator initialized with source_language: {self.source_language}, "
-            f"target_language: {self.target_language}, keywords_map: {self.keywords_map}, llm: {self.llm}"
+            f"target_language: {self.target_language}, keywords_map: {self.keywords_map}, llm: {self.llm.get_config()}"
         )
 
     def translate(self, input_text: str) -> str:

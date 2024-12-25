@@ -40,6 +40,8 @@ class LLMName(str, Enum):
     codestral = "codestral"
     qwen_32b = "qwen:32b"
     qwq = "qwq"
+    qwen_2_5_32b = "qwen2.5:32b"
+    qwen_2_5_32b_translator = "qwen2.5:32b-translator"
 
 
 DEFAULT_LLM_NAME = LLMName.mistral_small
@@ -151,6 +153,8 @@ class LLMModelConfig:
         DefaultModelSuppliers.ALIBABA: {
             LLMName.qwq: LLMConfig(context=32000, tokenizer_hub=""),
             LLMName.qwen_32b: LLMConfig(context=32000, tokenizer_hub=""),
+            LLMName.qwen_2_5_32b: LLMConfig(context=128000, tokenizer_hub=""),
+            LLMName.qwen_2_5_32b_translator: LLMConfig(context=128000, tokenizer_hub=""),
         },
     }
 

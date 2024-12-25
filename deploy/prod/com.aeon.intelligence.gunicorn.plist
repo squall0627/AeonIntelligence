@@ -10,6 +10,8 @@
 		<string>-c</string>
 		<string>gunicorn_config_api.py</string>
 		<string>--enable-stdio-inheritance</string>
+		<string>--timeout</string>
+		<string>6000</string>
 		<string>api.translator_app:translator_app</string>
 	</array>
 	<key>WorkingDirectory</key>
