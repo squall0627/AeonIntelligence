@@ -151,7 +151,7 @@ def render_knowledge_warehouse_chat():
     with col3:
         # Add vertical centering for submit button
         if st.button("Submit", key="submit"):
-            prompt = prompt or "Hello"
+            # prompt = prompt or "Hello"
             if prompt:
                 with st.spinner("Generating response..."):
                     generated_response = ask(kw, prompt)

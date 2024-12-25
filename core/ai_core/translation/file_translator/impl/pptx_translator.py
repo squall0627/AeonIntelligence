@@ -1,4 +1,5 @@
 import os
+import math
 
 from enum import Enum
 
@@ -107,14 +108,37 @@ class PPTXTranslator(FileTranslatorBase):
                                     translated_texts,
                                 )
                                 future_task["status"] = "done"
+
+                                # completion rate compute
+                                self.completion_rate = math.floor(
+                                    sum(
+                                        1
+                                        for _, future in futures.items()
+                                        if future["status"] == "done"
+                                    )
+                                    / len(futures.keys())
+                                    * 100
+                                )
                 except Exception as e:
                     logger.error(e)
                     print(e)
         else:
             # run sequentially
+            translated_slide_count = 0
             for slide in ppt.slides:
                 if target_slide_index is None or slide_index in target_slide_index:
                     self._translate_slide(slide, TranslationMode.TRANSLATE)
+                    translated_slide_count += 1
+                    # completion rate compute
+                    self.completion_rate = math.floor(
+                        translated_slide_count
+                        / len(
+                            target_slide_index
+                            if target_slide_index is not None
+                            else ppt.slides
+                        )
+                        * 100
+                    )
                 slide_index += 1
 
         logger.debug(">>> Translating input file name")

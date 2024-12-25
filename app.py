@@ -2,6 +2,8 @@ import streamlit as st
 
 from ui.footer import render_footer
 from ui.sidebar import render_sidebar
+from ui.translation.file_translation import render_file_translation_page
+from ui.translation.text_translation import render_text_translation_page
 
 st.set_page_config(
     page_title="Aeon Intelligence",
@@ -133,11 +135,17 @@ def main():
     if len(st.session_state[knowledge_warehouses_key()]) == 0:
         page = "Knowledge Warehouse Admin"
 
-    if page == "Knowledge Warehouse Chat":
+    if page == "Knowledge Warehouse":
         render_knowledge_warehouse_chat()
 
     elif page == "Knowledge Warehouse Admin":
         render_knowledge_warehouse_admin()
+
+    elif page == "Text Translation":
+        render_text_translation_page()
+
+    elif page == "File Translation":
+        render_file_translation_page()
 
     render_footer()
 

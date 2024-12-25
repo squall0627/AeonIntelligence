@@ -37,6 +37,25 @@ def get_profile_picture(email):
     return img
 
 
+def render_navigation():
+    nav_items = {
+        "Home": "🏠",
+        "Chat": "💬",
+        "Knowledge Warehouse": "📚",
+        "Brain Studio": "🧠",
+        "Text Translation": "🌐",
+        "File Translation": "📘",
+    }
+
+    if "current_page" not in st.session_state:
+        st.session_state.current_page = "Knowledge Warehouse"
+
+    for page, icon in nav_items.items():
+        if st.sidebar.button(f"{icon} {page}", key=page):
+            st.session_state.current_page = page
+            st.rerun()
+
+
 def render_sidebar():
     render_style()
 
@@ -65,8 +84,9 @@ def render_sidebar():
 
     # Add this to your sidebar or main content
     st.sidebar.title("Navigation")
-    page = st.sidebar.selectbox(
-        "Choose a page", ["Knowledge Warehouse Chat", "Knowledge Warehouse Admin"]
-    )
+    # page = st.sidebar.selectbox(
+    #     "Choose a page", ["Knowledge Warehouse Chat", "Knowledge Warehouse Admin"]
+    # )
+    render_navigation()
 
-    return page
+    return st.session_state.current_page

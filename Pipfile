@@ -33,6 +33,7 @@ python-pptx = "*"
 puremagic = "*"
 youtube-transcript-api = "*"
 "stopwatch.py" = "*"
+python-math = "*"
 
 [dev-packages]
 

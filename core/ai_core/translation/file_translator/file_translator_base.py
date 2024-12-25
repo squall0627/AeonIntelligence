@@ -22,6 +22,7 @@ class FileTranslatorBase(ABC):
     keywords_map: dict | None
     text_translator: TextTranslator
     kwargs: dict | None = {}
+    completion_rate: int
 
     def __init__(
         self,
@@ -74,3 +75,6 @@ class FileTranslatorBase(ABC):
         )
         self.kwargs = kwargs
         return self
+
+    def completion_rate(self):
+        return self.completion_rate if self.completion_rate else 0
