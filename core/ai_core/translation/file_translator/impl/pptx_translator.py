@@ -110,7 +110,7 @@ class PPTXTranslator(FileTranslatorBase):
                                 future_task["status"] = "done"
 
                                 # completion rate compute
-                                self.completion_rate = math.floor(
+                                self.status.progress = math.floor(
                                     sum(
                                         1
                                         for _, future in futures.items()
@@ -130,7 +130,7 @@ class PPTXTranslator(FileTranslatorBase):
                     self._translate_slide(slide, TranslationMode.TRANSLATE)
                     translated_slide_count += 1
                     # completion rate compute
-                    self.completion_rate = math.floor(
+                    self.status.progress = math.floor(
                         translated_slide_count
                         / len(
                             target_slide_index
@@ -149,6 +149,7 @@ class PPTXTranslator(FileTranslatorBase):
 
         # save translated file
         ppt.save(output_path)
+        self.status.progress = 100
 
         logger.info(f"Translated {self.input_file_path} save to {output_path}")
 

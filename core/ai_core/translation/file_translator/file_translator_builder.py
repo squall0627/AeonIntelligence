@@ -10,6 +10,9 @@ from core.ai_core.translation.file_translator.file_translator_registry import (
 from core.ai_core.translation.file_translator.file_translator_type import (
     FileTranslatorType,
 )
+from core.ai_core.translation.file_translator.models.file_translation_status import (
+    FileTranslationStatus,
+)
 from core.ai_core.translation.language import Language
 
 
@@ -21,6 +24,7 @@ class FileTranslatorBuilder:
         source_language: Language | str,
         target_language: Language | str,
         *,
+        status: FileTranslationStatus,
         keywords_map: dict | None = None,
         **kwargs,
     ) -> FileTranslatorBase:
@@ -39,6 +43,7 @@ class FileTranslatorBuilder:
             input_file_path,
             source_language,
             target_language,
+            status=status,
             keywords_map=keywords_map,
             **kwargs,
         )

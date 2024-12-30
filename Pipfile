@@ -34,6 +34,15 @@ puremagic = "*"
 youtube-transcript-api = "*"
 "stopwatch.py" = "*"
 python-math = "*"
+fastapi = "*"
+python-jose = "*"
+sqlalchemy-pyodbc-mssql = "*"
+passlib = "*"
+uvicorn = "*"
+python-multipart = "*"
+pyodbc = "*"
+pydantic = {extras = ["email"], version = "*"}
+bcrypt = "*"
 
 [dev-packages]
 

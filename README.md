@@ -34,3 +34,12 @@ nginx -v
 sudo systemctl start nginx
 ## on Mac
 brew services start nginx
+
+# Install Sql Server Driver on Mac
+## Install unixODBC using Homebrew
+brew install unixodbc
+
+## Install Microsoft ODBC Driver for SQL Server
+brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release
+brew update
+brew install msodbcsql18 mssql-tools18

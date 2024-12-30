@@ -4,6 +4,7 @@ from ui.footer import render_footer
 from ui.sidebar import render_sidebar
 from ui.translation.file_translation import render_file_translation_page
 from ui.translation.text_translation import render_text_translation_page
+from ui.authentication import check_authentication
 
 st.set_page_config(
     page_title="Aeon Intelligence",
@@ -116,7 +117,7 @@ def main():
 
     initialize_auth_state()
 
-    if not st.session_state.authenticated:
+    if not check_authentication():
         render_login_page()
         return
 
