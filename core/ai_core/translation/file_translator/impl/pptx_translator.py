@@ -55,7 +55,7 @@ class PPTXTranslator(FileTranslatorBase):
         )
 
         run_parallely = self.kwargs.get("run_parallely", True)
-        target_slide_index = self.kwargs.get("target_slide_index", None)
+        target_slide_index = self.kwargs.get("target_pages", None)
 
         text_translator = self.text_translator
         ppt = pptx.Presentation(self.input_file_path)
@@ -119,6 +119,7 @@ class PPTXTranslator(FileTranslatorBase):
                                     / len(futures.keys())
                                     * 100
                                 )
+                                await self.status.persist()
                 except Exception as e:
                     logger.error(e)
                     print(e)
@@ -139,6 +140,7 @@ class PPTXTranslator(FileTranslatorBase):
                         )
                         * 100
                     )
+                    await self.status.persist()
                 slide_index += 1
 
         logger.debug(">>> Translating input file name")
@@ -150,6 +152,7 @@ class PPTXTranslator(FileTranslatorBase):
         # save translated file
         ppt.save(output_path)
         self.status.progress = 100
+        await self.status.persist()
 
         logger.info(f"Translated {self.input_file_path} save to {output_path}")
 

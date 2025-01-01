@@ -52,6 +52,7 @@ class FileTranslatorBase(ABC):
         duration = sw.duration
         logger.info(f"Translation completed in {duration:.2f} seconds")
         self.status.duration = duration
+        await self.status.persist()
         return self.status
 
     def translate(self, output_dir: Path | str) -> FileTranslationStatus:

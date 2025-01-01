@@ -1,5 +1,6 @@
 # Run the app on gunicorn
 pipenv run gunicorn -c gunicorn_config_api.py api.translator_app:translator_app
+pipenv run uvicorn api.main:app --port 5004 --workers 4 --limit-concurrency 100 --log-level debug --timeout-keep-alive 60
 
 # Run the streamlit app
 pipenv run streamlit run app.py
@@ -43,3 +44,8 @@ brew install unixodbc
 brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release
 brew update
 brew install msodbcsql18 mssql-tools18
+
+# Install Redis on Mac
+brew install redis
+brew services start redis
+brew services restart redis

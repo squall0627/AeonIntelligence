@@ -68,3 +68,30 @@ class TextTranslator:
         logger.debug(f"Response: {response}")
 
         return response.content
+
+    async def astream_translate(self, input_text: str):
+        """Stream the translation of the input text."""
+        # if input_text is empty, return empty string
+        if not input_text or input_text.strip() == "":
+            yield ""
+            return  # Explicitly return after yielding
+
+        # if input_text is "-", return "-"
+        if input_text in ["-", "ー", "‐"]:
+            yield input_text
+            return  # Explicitly return after yielding
+
+        msg = translation_prompts.SIMPLE_TRANSLATE_PROMPT.format(
+            keywords_map=self.keywords_map,
+            instruction=f"Translate {self.source_language} to {self.target_language}.",
+            input_text=input_text,
+        )
+        logger.debug(f"Streaming Message: {msg}")
+
+        # Simulate streaming response
+        async for chunk in self.llm.llm.astream(msg):
+            logger.debug(f"Streaming Response Chunk: {chunk}")
+            yield chunk.content  # Yield each chunk of the response
+
+        # Add a final log or message after streaming is complete
+        logger.debug("Streaming translation completed.")

@@ -43,6 +43,8 @@ python-multipart = "*"
 pyodbc = "*"
 pydantic = {extras = ["email"], version = "*"}
 bcrypt = "*"
+nicegui = "*"
+redis = "*"
 
 [dev-packages]
 
