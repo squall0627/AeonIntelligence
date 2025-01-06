@@ -2,7 +2,7 @@ import asyncio
 from abc import ABC
 from typing import Callable, Any, Awaitable
 
-from nicegui import ui
+from nicegui import ui, page
 from nicegui.awaitable_response import AwaitableResponse
 from nicegui.element import Element
 from nicegui.elements.mixins.disableable_element import DisableableElement
@@ -53,6 +53,10 @@ class AIPageBase(ABC):
 
     def submit_handler(self, callback: Callable[[], Any], lock_ui: bool = True):
         return lambda func=callback: self.submit(func, lock_ui)
+
+    def get_current_page(self) -> page:
+        """Get the current page instance"""
+        return ui.context.client.page
 
 
 class ComponentWrapper:

@@ -38,32 +38,32 @@ class Application:
         self.setup_routes()
 
     def setup_routes(self):
-        @ui.page("/ui")
-        @ui.page("/ui/login")
+        @ui.page("/ui", title="Login")
+        @ui.page("/ui/login", title="Login")
         def login_page():
             # Clear any existing auth if accessing login page
             with suppress(Exception):  # Safely clear storage
                 app.storage.user.clear()
             LoginPage()
 
-        @ui.page("/ui/chat")
-        @ui.page("/ui/chat/{tab}")
+        @ui.page("/ui/chat", title="Chat")
+        @ui.page("/ui/chat/{tab}", title="Chat")
         def chat_page(tab: str = "chat"):
             if not auth_required():  # Only render if authenticated
                 Chat()
 
-        @ui.page("/ui/knowledge")
-        @ui.page("/ui/knowledge/{tab}")
+        @ui.page("/ui/knowledge", title="Knowledge Warehouse")
+        @ui.page("/ui/knowledge/{tab}", title="Knowledge Warehouse")
         def knowledge_page(tab: str = "chat"):
             if not auth_required():  # Only render if authenticated
                 KnowledgePage(tab)
 
-        @ui.page("/ui/translation")
+        @ui.page("/ui/translation", title="Translator")
         def translation_page():
             if not auth_required():  # Only render if authenticated
                 TranslationPage()
 
-        @ui.page("/ui/profile")
+        @ui.page("/ui/profile", title="Profile")
         def profile_page():
             if not auth_required():  # Only render if authenticated
                 UserProfile()
