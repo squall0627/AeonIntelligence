@@ -54,7 +54,7 @@ class LoginPage:
                     )
 
                     # Navigate to redirect path or default to knowledge page
-                    redirect_path = app.storage.user.get("redirect", "/ui/knowledge")
+                    redirect_path = app.storage.user.get("redirect", "/ui/chat")
                     ui.navigate.to(redirect_path)
                     ui.notify(f"Welcome back, {self.username.value}!", type="positive")
                 else:

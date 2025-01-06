@@ -42,6 +42,7 @@ class LLMName(str, Enum):
     qwq = "qwq"
     qwen_2_5_32b = "qwen2.5:32b"
     qwen_2_5_32b_translator = "qwen2.5:32b-translator"
+    qwen_2_5_14b = "qwen2.5:14b"
 
 
 DEFAULT_LLM_NAME = LLMName.mistral_small
@@ -155,6 +156,7 @@ class LLMModelConfig:
             LLMName.qwen_32b: LLMConfig(context=32000, tokenizer_hub=""),
             LLMName.qwen_2_5_32b: LLMConfig(context=128000, tokenizer_hub=""),
             LLMName.qwen_2_5_32b_translator: LLMConfig(context=128000, tokenizer_hub=""),
+            LLMName.qwen_2_5_14b: LLMConfig(context=128000, tokenizer_hub=""),
         },
     }
 

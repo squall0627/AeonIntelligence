@@ -4,7 +4,7 @@ from typing import Optional, Self
 import redis
 from pydantic import BaseModel
 
-from api.db.redis_handler import get_redis
+from api.cache.redis_handler import get_redis
 
 
 class Status(str, Enum):

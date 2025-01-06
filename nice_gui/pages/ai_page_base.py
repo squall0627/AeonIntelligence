@@ -13,6 +13,7 @@ from nice_gui.utils.api_client import APIClient
 class AIPageBase(ABC):
 
     def __init__(self) -> None:
+        super().__init__()
         # API Client
         self._api_client = APIClient()
         # Button for Component Control

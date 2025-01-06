@@ -8,10 +8,10 @@ from fastapi import (
 )
 from fastapi.responses import JSONResponse
 
-from api.db.redis_handler import get_redis
+from api.cache.redis_handler import get_redis
 
 from api.middleware import auth_middleware
-from api.routers import index, translation, auth
+from api.routers import index, translation, auth, user_settings
 from api.db.database import init_db
 from core.utils.log_handler import rotating_file_logger
 
@@ -53,6 +53,13 @@ app.include_router(
     translation.router,
     prefix="/api/translation",
     tags=["translation"],
+    dependencies=[Depends(auth_middleware), Depends(get_redis)],
+)
+
+app.include_router(
+    user_settings.router,
+    prefix="/api/user/settings",
+    tags=["user_settings"],
     dependencies=[Depends(auth_middleware), Depends(get_redis)],
 )
 

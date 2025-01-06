@@ -101,7 +101,9 @@ def verify_token(token: str) -> bool:
         return False
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(
+    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+):
     """
     Get current user from token using email as primary identifier
     """
@@ -122,7 +124,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             raise credentials_exception
 
         # Get user by email instead of username
-        user = get_user_by_email(email=email)
+        user = get_user_by_email(email=email, db=db)
         if user is None:
             raise credentials_exception
 

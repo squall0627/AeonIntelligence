@@ -22,7 +22,7 @@ from datetime import datetime
 
 from werkzeug.utils import secure_filename
 
-from api.db.redis_handler import get_redis
+from api.cache.redis_handler import get_redis
 from core.ai_core.translation.file_translator.models.file_translation_status import (
     FileTranslationStatus,
     Status,
