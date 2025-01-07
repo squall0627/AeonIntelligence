@@ -122,6 +122,9 @@ class UserProfile(BaseLayout):
             }
             await self.api_client.post("/api/auth/register", False, json=json)
 
+            # Clear the user info in local storage
+            user_state.clear_user()
+
             ui.notify("Edit successful!", type="positive")
 
         except Exception as e:

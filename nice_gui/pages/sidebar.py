@@ -184,7 +184,7 @@ class Sidebar(AIPageBase):
     async def load_user_data(self):
         """Load user data and update UI"""
         try:
-            user = await user_state.fetch_user(self.api_client)
+            user = await user_state.get_user(self.api_client)
             if user:
                 self.user_label.text = user.email
                 self.user_label.tooltip = f"Logged in as {user.full_name}"
