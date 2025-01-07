@@ -45,6 +45,7 @@ pydantic = {extras = ["email"], version = "*"}
 bcrypt = "*"
 nicegui = "*"
 redis = "*"
+python-i18n = "*"
 
 [dev-packages]
 

@@ -1,7 +1,7 @@
 import pyperclip
 from nicegui import ui
 
-
+from nice_gui.i18n import t
 from nice_gui.pages.ai_page_base import AIPageBase
 
 
@@ -34,7 +34,10 @@ class TextTranslationPage(AIPageBase):
             with ui.row().classes("w-full gap-4 flex flex-col md:flex-row"):
                 # Source text area
                 with ui.column().classes("flex-1"):
-                    ui.label("Source Text").classes("text-lg font-bold")
+                    self.local_ui(
+                        ui.label(t("translator.text_tab.label.source_text")),
+                        "translator.text_tab.label.source_text",
+                    ).classes("text-lg font-bold")
                     self.source_text = self.wrap_ui(
                         ui.textarea().classes("w-full h-48")
                     )
@@ -42,7 +45,10 @@ class TextTranslationPage(AIPageBase):
                 # Translated text area with copy button
                 with ui.column().classes("flex-1"):
                     with ui.row().classes("items-center justify-between"):
-                        ui.label("Translation Result").classes("text-lg font-bold")
+                        self.local_ui(
+                            ui.label(t("translator.text_tab.label.translation_result")),
+                            "translator.text_tab.label.translation_result",
+                        ).classes("text-lg font-bold")
                         self.wrap_ui(
                             ui.button(
                                 "", on_click=self.copy_translation, icon="content_copy"
@@ -56,11 +62,14 @@ class TextTranslationPage(AIPageBase):
             with ui.row().classes("w-full gap-2 flex-wrap justify-center"):
                 for task_id, task_name in self.TRANSLATION_TASKS.items():
                     self.wrap_ui(
-                        ui.button(
-                            task_name,
-                            on_click=self.submit_handler(
-                                lambda t=task_id: self.submit_translation_text(t)
+                        self.local_ui(
+                            ui.button(
+                                t(f"translator.button.{task_id}"),
+                                on_click=self.submit_handler(
+                                    lambda tt=task_id: self.submit_translation_text(tt)
+                                ),
                             ),
+                            f"translator.button.{task_id}",
                         ).classes("flex-grow-0")
                     )
 
@@ -68,7 +77,10 @@ class TextTranslationPage(AIPageBase):
         with ui.column().classes("w-full gap-4 p-4"):
             # History section header with refresh button
             with ui.row().classes("w-full items-center justify-between"):
-                ui.label("Translation History").classes("text-xl font-bold")
+                self.local_ui(
+                    ui.label(t("translator.text_tab.label.translation_history")),
+                    "translator.text_tab.label.translation_history",
+                ).classes("text-xl font-bold")
                 self.wrap_ui(
                     ui.button("", on_click=self.load_text_history).props("icon=refresh")
                 )

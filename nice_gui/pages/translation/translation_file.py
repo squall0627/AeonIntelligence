@@ -8,6 +8,7 @@ from typing import Dict
 from core.ai_core.translation.file_translator.models.file_translation_status import (
     Status,
 )
+from nice_gui.i18n import t
 from nice_gui.pages.ai_page_base import AIPageBase
 
 
@@ -56,11 +57,14 @@ class FileTranslationPage(AIPageBase):
             with ui.row().classes("w-full gap-2 flex-wrap justify-center"):
                 for task_id, task_name in self.TRANSLATION_TASKS.items():
                     self.wrap_ui(
-                        ui.button(
-                            task_name,
-                            on_click=self.submit_handler(
-                                lambda t=task_id: self.submit_translate_files(t)
+                        self.local_ui(
+                            ui.button(
+                                t(f"translator.button.{task_id}"),
+                                on_click=self.submit_handler(
+                                    lambda tt=task_id: self.submit_translate_files(tt)
+                                ),
                             ),
+                            f"translator.button.{task_id}",
                         ).classes("flex-grow-0")
                     )
 
@@ -71,7 +75,10 @@ class FileTranslationPage(AIPageBase):
         with ui.column().classes("w-full gap-4 p-4"):
             # History section header with refresh button
             with ui.row().classes("w-full items-center justify-between"):
-                ui.label("Translation History").classes("text-xl font-bold")
+                self.local_ui(
+                    ui.label(t("translator.file_tab.label.translation_history")),
+                    "translator.file_tab.label.translation_history",
+                ).classes("text-xl font-bold")
                 self.wrap_ui(
                     ui.button("", on_click=self.load_file_history).props("icon=refresh")
                 )

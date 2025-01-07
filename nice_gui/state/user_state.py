@@ -24,6 +24,7 @@ class User:
 @dataclass
 class UserSettings:
     dark_mode: bool = False
+    language: str = "en"
 
 
 class UserState:
@@ -106,22 +107,17 @@ class UserState:
 
         if not app.storage.user.get("user_settings"):
             try:
-                settings_data = await api_client.get("/api/user/settings/theme")
+                settings_data = await api_client.get("/api/user/settings/load")
 
-                app.storage.user.update(
-                    {
-                        "user_settings": {
-                            "dark_mode": settings_data.get("dark_mode", False),
-                        }
-                    }
-                )
+                app.storage.user.update({"user_settings": settings_data})
             except Exception as e:
                 print(f"Error fetching user settings: {e}")
                 return UserSettings()
 
-        return UserSettings(
-            dark_mode=app.storage.user.get("user_settings").get("dark_mode", False),
-        )
+        current_settings = UserSettings()
+        for key, value in app.storage.user.get("user_settings").items():
+            setattr(current_settings, key, value)
+        return current_settings
 
     async def update_user_settings(self, api_client, **settings):
         """Update settings for current user"""
@@ -130,12 +126,11 @@ class UserState:
             return None
 
         try:
-            await api_client.post("/api/user/settings/theme", json=settings)
+            current_settings = await api_client.post(
+                "/api/user/settings/update", json=settings
+            )
 
-            current_settings = await self.get_user_settings(api_client)
-            for key, value in settings.items():
-                setattr(current_settings, key, value)
-            app.storage.user.update({"user_settings": current_settings.__dict__})
+            app.storage.user.update({"user_settings": current_settings})
 
             return current_settings
         except Exception as e:

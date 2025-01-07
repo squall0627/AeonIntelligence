@@ -1,5 +1,6 @@
 from nicegui import ui
 
+from nice_gui.i18n import t
 from nice_gui.pages.layout_base import BaseLayout
 from nice_gui.pages.translation.translation_file import FileTranslationPage
 from nice_gui.pages.translation.translation_text import TextTranslationPage
@@ -18,6 +19,9 @@ class TranslationPage(BaseLayout):
 
         with ui.tab_panels(tabs, value="Text").classes("w-full"):
             with ui.tab_panel("Text"):
-                TextTranslationPage()
+                self.local_ui(TextTranslationPage(), "TextTranslationPage")
             with ui.tab_panel("File"):
-                FileTranslationPage()
+                self.local_ui(FileTranslationPage(), "FileTranslationPage")
+
+    def localize_page_title(self):
+        self.get_current_page().title = t("translator.title")

@@ -1,0 +1,49 @@
+{
+  "sidebar": {
+    "menu": {
+      "chat": "チャット",
+      "knowledge": "知識倉庫",
+      "translator": "翻訳"
+    }
+  },
+  "translator": {
+    "title": "翻訳",
+    "text_tab": {
+      "label": {
+        "source_text": "翻訳元",
+        "translation_result": "翻訳結果",
+        "translation_history": "翻訳履歴"
+      },
+      "table": {
+        "title": {
+          "datetime": "処理日時",
+          "task": "タスク",
+          "source_text": "翻訳元",
+          "translated_text": "翻訳結果"
+        }
+      }
+    },
+    "file_tab": {
+      "label": {
+        "translation_history": "翻訳履歴"
+      },
+      "table": {
+        "title": {
+          "datetime": "処理日時",
+          "task": "タスク",
+          "source_file": "翻訳元",
+          "status": "ステータス",
+          "translated_file": "翻訳結果"
+        }
+      }
+    },
+    "button": {
+      "ja_to_zh": "日➡︎中",
+      "ja_to_en": "日➡︎英",
+      "zh_to_ja": "中➡︎日",
+      "zh_to_en": "中➡︎英",
+      "en_to_ja": "英➡︎日",
+      "en_to_zh": "英➡︎中"
+    }
+  }
+}

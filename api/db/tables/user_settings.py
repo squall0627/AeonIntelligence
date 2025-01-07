@@ -8,3 +8,4 @@ class UserSetting(Base):
 
     user_id = Column(String(255), primary_key=True, nullable=False)
     dark_mode = Column(Boolean, default=False)
+    language = Column(String(255), default="en")

@@ -1,0 +1,49 @@
+{
+  "sidebar": {
+    "menu": {
+      "chat": "聊天",
+      "knowledge": "知识仓库",
+      "translator": "翻译"
+    }
+  },
+  "translator": {
+    "title": "翻译",
+    "text_tab": {
+      "label": {
+        "source_text": "原文档",
+        "translation_result": "翻译结果",
+        "translation_history": "翻译履历"
+      },
+      "table": {
+        "title": {
+          "datetime": "处理日时",
+          "task": "任务",
+          "source_text": "原文档",
+          "translated_text": "翻译结果"
+        }
+      }
+    },
+    "file_tab": {
+      "label": {
+        "translation_history": "翻译履历"
+      },
+      "table": {
+        "title": {
+          "datetime": "处理日时",
+          "task": "任务",
+          "source_file": "原文件",
+          "status": "状态",
+          "translated_file": "翻译结果"
+        }
+      }
+    },
+    "button": {
+      "ja_to_zh": "日➡︎中",
+      "ja_to_en": "日➡︎英",
+      "zh_to_ja": "中➡︎日",
+      "zh_to_en": "中➡︎英",
+      "en_to_ja": "英➡︎日",
+      "en_to_zh": "英➡︎中"
+    }
+  }
+}

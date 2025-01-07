@@ -11,7 +11,7 @@ class UserSettingsDao:
     def __init__(self, db: Session):
         self.db = db
 
-    async def update_user_settings(self, user_id: str, **kwargs):
+    async def update_user_settings(self, user_id: str, **kwargs) -> dict[str, any]:
         """
         Update or create user settings using SQL Server MERGE statement.
         """
@@ -64,7 +64,11 @@ class UserSettingsDao:
                 return None
 
             # Convert to dictionary
-            return {"user_id": settings.user_id, "dark_mode": settings.dark_mode}
+            return {
+                "user_id": settings.user_id,
+                "dark_mode": settings.dark_mode,
+                "language": settings.language,
+            }
         except Exception as e:
             logger.error(f"Error getting user settings: {e}")
             raise e

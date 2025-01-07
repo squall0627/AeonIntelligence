@@ -29,8 +29,8 @@ async def get_user_settings_with_cache(user_id: str, dao, redis_client) -> dict:
         settings = await dao.get_user_settings(user_id)
         if settings is None:
             # If not in db, save a default settings
-            settings = {"dark_mode": False}
-            await dao.update_user_settings(user_id, **settings)
+            settings = {"dark_mode": False, "language": "en"}
+            settings = await dao.update_user_settings(user_id, **settings)
             logger.debug(">>> No settings found, saved default settings")
         # Store in cache
         await cache.set_user_settings(user_id, settings)
@@ -39,32 +39,32 @@ async def get_user_settings_with_cache(user_id: str, dao, redis_client) -> dict:
     return settings
 
 
-@router.get("/theme")
-async def get_theme_settings(
+@router.get("/load")
+async def get_user_settings(
     current_user: User = Depends(get_current_user),
     redis_client: redis.Redis = Depends(get_redis),
     db: Session = Depends(get_db),
 ):
-    """Get user's theme settings"""
+    """Get user's settings"""
     dao = UserSettingsDao(db)
     return await get_user_settings_with_cache(current_user.email, dao, redis_client)
 
 
-@router.post("/theme")
-async def update_theme_settings(
+@router.post("/update")
+async def update_user_settings(
     settings: dict,
     current_user: User = Depends(get_current_user),
     redis_client: redis.Redis = Depends(get_redis),
     db: Session = Depends(get_db),
 ):
-    """Update user's theme settings"""
+    """Update user's settings"""
     # Update DB
     dao = UserSettingsDao(db)
-    await dao.update_user_settings(current_user.email, **settings)
+    settings = await dao.update_user_settings(current_user.email, **settings)
     logger.info(
-        f"User {current_user.email} updated theme settings: {json.dumps(settings)}"
+        f"User {current_user.email} updated user settings: {json.dumps(settings)}"
     )
     # Update cache
     cache = UserSettingsCache(redis_client)
     await cache.set_user_settings(current_user.email, settings)
-    return {"status": "success"}
+    return settings

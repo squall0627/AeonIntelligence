@@ -1,0 +1,49 @@
+{
+  "sidebar": {
+    "menu": {
+      "chat": "Chat",
+      "knowledge": "My Knowledge",
+      "translator": "Translator"
+    }
+  },
+  "translator": {
+    "title": "Translator",
+    "text_tab": {
+      "label": {
+        "source_text": "Source Text",
+        "translation_result": "Translation Result",
+        "translation_history": "Translation History"
+      },
+      "table": {
+        "title": {
+          "datetime": "Date Time",
+          "task": "Task",
+          "source_text": "Source Text",
+          "translated_text": "Translated Text"
+        }
+      }
+    },
+    "file_tab": {
+      "label": {
+        "translation_history": "Translation History"
+      },
+      "table": {
+        "title": {
+          "datetime": "Date Time",
+          "task": "Task",
+          "source_file": "Source File",
+          "status": "Status",
+          "translated_file": "Translated File"
+        }
+      }
+    },
+    "button": {
+      "ja_to_zh": "japanese➡︎chinese",
+      "ja_to_en": "japanese➡︎english",
+      "zh_to_ja": "chinese➡︎english",
+      "zh_to_en": "chinese➡︎english",
+      "en_to_ja": "english➡︎japanese",
+      "en_to_zh": "english➡︎chinese"
+    }
+  }
+}

@@ -2,15 +2,18 @@ from nicegui import ui
 from nice_gui.pages.ai_page_base import AIPageBase
 from nice_gui.state.user_state import user_state
 import asyncio
+from nice_gui.i18n import t, LANGUAGES, setup_i18n
 
 
 class Sidebar(AIPageBase):
 
-    def __init__(self):
+    def __init__(self, content_instance):
         super().__init__()
+        self.content_instance = content_instance
         self.user_label = None
         self.dark_mode = False
         self.dark_mode_ui = ui.dark_mode()
+        self.language_selector = None
         self.theme_icon = None
         self.is_collapsed = False
         self.sidebar_container = None
@@ -27,6 +30,7 @@ class Sidebar(AIPageBase):
         # Ensure theme initialization is within UI context
         with self.async_ui_card:  # Create a proper UI context container
             await self.initialize_theme()
+            await self.initialize_language_selector()
 
         # Get user information
         user = await user_state.get_user(self.api_client)
@@ -65,7 +69,9 @@ class Sidebar(AIPageBase):
                             "flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-blue-500"
                         ):
                             ui.icon("chat").classes("text-gray-500 dark:text-gray-400")
-                            ui.label("Chat")
+                            self.local_ui(
+                                ui.label(t("sidebar.menu.chat")), "sidebar.menu.chat"
+                            )
 
                         with ui.link(target="/ui/knowledge").classes(
                             "flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-blue-500"
@@ -73,7 +79,10 @@ class Sidebar(AIPageBase):
                             ui.icon("school").classes(
                                 "text-gray-500 dark:text-gray-400"
                             )
-                            ui.label("My Knowledge")
+                            self.local_ui(
+                                ui.label(t("sidebar.menu.knowledge")),
+                                "sidebar.menu.knowledge",
+                            )
 
                         with ui.link(target="/ui/translation").classes(
                             "flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-blue-500"
@@ -81,7 +90,10 @@ class Sidebar(AIPageBase):
                             ui.icon("translate").classes(
                                 "text-gray-500 dark:text-gray-400"
                             )
-                            ui.label("Translator")
+                            self.local_ui(
+                                ui.label(t("sidebar.menu.translator")),
+                                "sidebar.menu.translator",
+                            )
 
                     # Bottom section
                     with ui.column().classes("mt-auto gap-4"):
@@ -94,6 +106,7 @@ class Sidebar(AIPageBase):
 
                         # Icons row
                         with ui.row().classes("w-full items-center justify-between"):
+                            # github link
                             with ui.link(
                                 target="https://github.com/squall0627/AeonIntelligence",
                                 new_tab=True,
@@ -103,6 +116,15 @@ class Sidebar(AIPageBase):
                                     <img src="/static/github-logo.svg" style="width: 24px; height: 24px;" class="dark:invert" />
                                 """
                                 )
+
+                            # language selector
+                            self.language_selector = ui.select(
+                                options=LANGUAGES,
+                                # value="en",
+                                on_change=self.handle_language_change,
+                            ).classes("ml-2")
+
+                            # theme selector
                             self.theme_icon = ui.icon("light_mode").classes(
                                 "cursor-pointer"
                             )
@@ -142,6 +164,7 @@ class Sidebar(AIPageBase):
         try:
             # Get user state and settings
             user_settings = await user_state.get_user_settings(self.api_client)
+
             self.dark_mode = user_settings.dark_mode
 
             # Apply the stored theme
@@ -198,3 +221,15 @@ class Sidebar(AIPageBase):
         """Helper to set the content dynamically."""
         with self.content:
             await content_fn()
+
+    async def initialize_language_selector(self):
+        user_settings = await user_state.get_user_settings(self.api_client)
+        setup_i18n(user_settings.language)  # Initialize i18n with user's language
+
+        self.language_selector.value = user_settings.language
+
+    async def handle_language_change(self, e):
+        await user_state.update_user_settings(self.api_client, language=e.value)
+        setup_i18n(e.value)  # Update current language
+        self.localize()
+        self.content_instance.localize()
