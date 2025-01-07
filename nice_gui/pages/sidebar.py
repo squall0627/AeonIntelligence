@@ -23,7 +23,7 @@ class Sidebar(AIPageBase):
     async def initialize(self):
         """Initialize user data and theme"""
         # Get user state for current context
-        self.user_state = await get_user_state()
+        self.user_state = get_user_state()
         await self.load_user_data()
         # Ensure theme initialization is within UI context
         with self.async_ui_card:  # Create a proper UI context container
@@ -191,7 +191,7 @@ class Sidebar(AIPageBase):
             print(f"Error loading user data: {e}")
             self.user_label.text = "Error loading user"
 
-    def set_content(self, content_fn):
+    async def set_content(self, content_fn):
         """Helper to set the content dynamically."""
         with self.content:
-            content_fn()
+            await content_fn()

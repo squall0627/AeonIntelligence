@@ -77,7 +77,7 @@ class UserState:
 user_state_var: ContextVar[UserState] = ContextVar("user_state")
 
 
-async def get_user_state() -> UserState:
+def get_user_state() -> UserState:
     """Get or create user state for current context"""
     try:
         return user_state_var.get()
@@ -87,5 +87,5 @@ async def get_user_state() -> UserState:
         return state
 
 
-# Initialize global instance (for backward compatibility)
-user_state = UserState()
+# # Initialize global instance (for backward compatibility)
+# user_state = UserState()

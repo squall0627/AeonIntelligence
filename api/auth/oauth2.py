@@ -155,16 +155,33 @@ def create_user(
     db: Session, username: str, email: str, password: str, full_name: str = None
 ):
     """
-    Create a new user in the database
+    Create a new user in the database or update if email exists
     Only email needs to be unique
     """
     # Check if email already exists
     existing_user = db.query(UserModel).filter(UserModel.email == email).first()
 
     if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        # Update existing user
+        existing_user.username = username
+        existing_user.full_name = full_name
+        existing_user.hashed_password = get_password_hash(password)
+        try:
+            db.commit()
+            db.refresh(existing_user)
+            return UserInDB(
+                username=existing_user.username,
+                email=existing_user.email,
+                full_name=existing_user.full_name,
+                is_admin=existing_user.is_admin,
+                disabled=not existing_user.is_active,
+                hashed_password=existing_user.hashed_password,
+            )
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail="Error updating user")
 
-    # Create new user
+    # Create new user if doesn't exist
     hashed_password = get_password_hash(password)
     db_user = UserModel(
         username=username,
