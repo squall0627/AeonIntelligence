@@ -116,7 +116,7 @@ def render_file_translation_page():
                     # Display a status bar
                     with st.spinner("Translating..."):
                         # Status bar at the bottom
-                        st.progress(file_translator.completion_rate)
+                        st.progress(file_translator.status.progress)
                 except Exception as e:
                     logger.error(
                         {"error": f"Translation failed: file name: {filename} {str(e)}"}

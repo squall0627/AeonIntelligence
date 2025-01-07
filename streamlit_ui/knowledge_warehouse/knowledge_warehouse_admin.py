@@ -7,7 +7,7 @@ import nest_asyncio
 
 from typing import List
 
-from ui.authentication import knowledge_warehouses_key, selected_knowledge_warehouse_key
+from streamlit_ui.authentication import knowledge_warehouses_key, selected_knowledge_warehouse_key
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.ai_core.knowledge_warehouse.knowledge_warehouse import KnowledgeWarehouse

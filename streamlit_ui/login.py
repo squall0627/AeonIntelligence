@@ -1,5 +1,5 @@
 import streamlit as st
-from ui.authentication import login
+from streamlit_ui.authentication import login
 
 
 def render_style():
@@ -31,7 +31,7 @@ def render_login_page():
         submit = st.form_submit_button("Login")
 
         if submit:
-            if login(email):
+            if login(email, password):
                 st.success("Login successful!")
                 st.rerun()
             else:

@@ -6,7 +6,7 @@ import streamlit as st
 from streamlit_chat import message
 
 from core.ai_core.rag.entities.models import ParsedRAGResponse
-from ui.authentication import (
+from streamlit_ui.authentication import (
     knowledge_warehouses_key,
     selected_knowledge_warehouse_key,
     chat_answers_history_key,

@@ -4,7 +4,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 
-from ui.authentication import feedback_counts_key
+from streamlit_ui.authentication import feedback_counts_key
 
 
 def render_style():

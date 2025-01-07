@@ -1,6 +1,7 @@
 # Add this helper function at the top level
 import streamlit as st
 import re
+import requests
 
 
 def get_user_specific_key(base_key: str, user_id: str) -> str:
@@ -21,23 +22,34 @@ def initialize_auth_state():
         st.session_state.login_user_id = None
 
 
-def login(email: str) -> bool:
-    """Handle user login."""
-    if is_valid_email(email):
-        st.session_state.authenticated = True
-        st.session_state.login_user_id = email
-        return True
-    return False
+def login(username, password):
+    st.title("Login")
+
+    if st.button("Login"):
+        response = requests.post(
+            "http://localhost:8000/login_for_access_token",
+            data={"username": username, "password": password},
+        )
+
+        if response.status_code == 200:
+            token = response.json()["access_token"]
+            st.session_state["token"] = token
+            st.session_state["authenticated"] = True
+            st.session_state.login_user_id = username
+            return True
+        else:
+            return False
 
 
 def logout():
-    """Handle user logout."""
-    st.session_state.authenticated = False
-    st.session_state.login_user_id = None
-    # Clear other user-specific session state
-    for key in list(st.session_state.keys()):
-        if key.startswith(f"user_{st.session_state.login_user_id}_"):
-            del st.session_state[key]
+    if st.button("Logout"):
+        st.session_state["token"] = None
+        st.session_state["authenticated"] = False
+        st.rerun()
+
+
+def check_authentication():
+    return "authenticated" in st.session_state and st.session_state["authenticated"]
 
 
 def chat_answers_history_key() -> str:

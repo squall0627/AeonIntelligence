@@ -1,10 +1,10 @@
 import streamlit as st
 
-from ui.footer import render_footer
-from ui.sidebar import render_sidebar
-from ui.translation.file_translation import render_file_translation_page
-from ui.translation.text_translation import render_text_translation_page
-from ui.authentication import check_authentication
+from streamlit_ui.footer import render_footer
+from streamlit_ui.sidebar import render_sidebar
+from streamlit_ui.translation.file_translation import render_file_translation_page
+from streamlit_ui.translation.text_translation import render_text_translation_page
+from streamlit_ui.authentication import check_authentication
 
 st.set_page_config(
     page_title="Aeon Intelligence",
@@ -13,24 +13,23 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-import nest_asyncio
 
 from dotenv import load_dotenv
 import sys
 import os
 
-from ui.authentication import (
+from streamlit_ui.authentication import (
     initialize_auth_state,
     knowledge_warehouses_key,
 )
-from ui.authentication import get_user_specific_key
-from ui.knowledge_warehouse.knowledge_warehouse_admin import (
+from streamlit_ui.authentication import get_user_specific_key
+from streamlit_ui.knowledge_warehouse.knowledge_warehouse_admin import (
     render_knowledge_warehouse_admin,
 )
-from ui.knowledge_warehouse.knowledge_warehouse_chat import (
+from streamlit_ui.knowledge_warehouse.knowledge_warehouse_chat import (
     render_knowledge_warehouse_chat,
 )
-from ui.login import render_login_page
+from streamlit_ui.login import render_login_page
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.ai_core.knowledge_warehouse import KnowledgeWarehouse
