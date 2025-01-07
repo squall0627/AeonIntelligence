@@ -5,7 +5,8 @@ import httpx
 from typing import Optional, Dict, Any
 
 from httpx._types import RequestFiles
-from nicegui import app
+
+from nice_gui.state.user_state import user_state
 
 
 class APIClient:
@@ -27,11 +28,13 @@ class APIClient:
         """Make a GET request to the API"""
         if need_auth:
             # Get auth token from storage
-            auth_token = app.storage.user.get("access_token")
-            token_type = app.storage.user.get("token_type")
-            if auth_token:
-                # raise Exception("Not authenticated")
-                self.set_token(auth_token, token_type)
+            auth = user_state.get_auth()
+            if auth:
+                auth_token = auth.access_token
+                token_type = auth.token_type
+                if auth_token:
+                    # raise Exception("Not authenticated")
+                    self.set_token(auth_token, token_type)
         else:
             self.headers.pop("Authorization", None)
 
@@ -74,11 +77,13 @@ class APIClient:
 
         if need_auth:
             # Get auth token from storage
-            auth_token = app.storage.user.get("access_token")
-            token_type = app.storage.user.get("token_type")
-            if auth_token:
-                # raise Exception("Not authenticated")
-                self.set_token(auth_token, token_type)
+            auth = user_state.get_auth()
+            if auth:
+                auth_token = auth.access_token
+                token_type = auth.token_type
+                if auth_token:
+                    # raise Exception("Not authenticated")
+                    self.set_token(auth_token, token_type)
         else:
             self.headers.pop("Authorization", None)
 
@@ -123,11 +128,13 @@ class APIClient:
 
         if need_auth:
             # Get auth token from storage
-            auth_token = app.storage.user.get("access_token")
-            token_type = app.storage.user.get("token_type")
-            if auth_token:
-                # raise Exception("Not authenticated")
-                self.set_token(auth_token, token_type)
+            auth = user_state.get_auth()
+            if auth:
+                auth_token = auth.access_token
+                token_type = auth.token_type
+                if auth_token:
+                    # raise Exception("Not authenticated")
+                    self.set_token(auth_token, token_type)
         else:
             self.headers.pop("Authorization", None)
 

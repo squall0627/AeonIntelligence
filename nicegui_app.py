@@ -10,6 +10,7 @@ from nice_gui.pages.knowledge_warehouse.knowledge import KnowledgePage
 from nice_gui.pages.profile.register import UserRegister
 from nice_gui.pages.profile.user_profile import UserProfile
 from nice_gui.pages.translation.translation import TranslationPage
+from nice_gui.state.user_state import user_state
 
 # Get the absolute path to your static directory
 STATIC_PATH = Path(__file__).parent / "nice_gui" / "static"
@@ -21,12 +22,12 @@ app.add_static_files("/static", STATIC_PATH)
 
 # Authentication middleware
 def auth_required():
-    if not app.storage.user.get("authenticated", False):
+    if not user_state.get_auth() or not user_state.get_auth().authenticated:
         # Store the current path as string for redirect after login
         current_path = ui.context.client.page.path  # Convert to string
         with suppress(Exception):  # Safely update storage
             if current_path is not None:
-                app.storage.user.update({"redirect": current_path})
+                user_state.update_redirect_path(current_path)
         # Redirect to login page
         ui.navigate.to("/ui/login")
         return True
@@ -43,8 +44,7 @@ class Application:
         @ui.page("/ui/login", title="Login")
         def login_page():
             # Clear any existing auth if accessing login page
-            with suppress(Exception):  # Safely clear storage
-                app.storage.user.clear()
+            user_state.clear_all()
             LoginPage()
 
         @ui.page("/ui/chat", title="Chat")

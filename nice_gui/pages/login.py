@@ -1,5 +1,7 @@
 from dotenv import load_dotenv
-from nicegui import ui, app
+from nicegui import ui
+
+from nice_gui.state.user_state import user_state
 from nice_gui.utils.api_client import APIClient
 
 load_dotenv()
@@ -42,19 +44,14 @@ class LoginPage:
                 )
 
                 if result:
-                    # Update user storage with authentication info
-                    app.storage.user.update(
-                        {
-                            "authenticated": True,
-                            "username": self.username.value,
-                            "access_token": result["access_token"],
-                            "token_type": result["token_type"],
-                            "is_admin": result.get("is_admin", False),
-                        }
+                    result.update(
+                        {"authenticated": True, "username": self.username.value}
                     )
+                    user_state.update_auth(**result)
 
                     # Navigate to redirect path or default to knowledge page
-                    redirect_path = app.storage.user.get("redirect", "/ui/chat")
+                    # redirect_path = app.storage.user.get("redirect", "/ui/chat")
+                    redirect_path = user_state.get_redirect_path("/ui/chat")
                     ui.navigate.to(redirect_path)
                     ui.notify(f"Welcome back, {self.username.value}!", type="positive")
                 else:

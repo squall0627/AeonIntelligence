@@ -22,8 +22,8 @@ class UserRegister(AIPageBase):
             ).classes("w-full mb-4")
 
             self.username = ui.input(
-                label="Username",
-                placeholder="Choose a username",
+                label="Nickname",
+                placeholder="Choose a nickname",
                 validation={
                     "Input too long": lambda value: 30 >= len(value),
                     "This field is required": lambda value: len(value) > 0,

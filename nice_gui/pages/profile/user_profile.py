@@ -1,10 +1,8 @@
-from contextlib import suppress
-
 from nicegui import ui
-from nicegui import app
+
 
 from nice_gui.pages.layout_base import BaseLayout
-from nice_gui.state.user_state import get_user_state
+from nice_gui.state.user_state import user_state
 
 
 class UserProfile(BaseLayout):
@@ -17,7 +15,7 @@ class UserProfile(BaseLayout):
         await self.setup_register_page()
 
     async def setup_register_page(self):
-        user = await get_user_state().fetch_user(self.api_client)
+        user = await user_state.get_user(self.api_client)
         if user:
             with ui.card().classes("w-96 mx-auto mt-8 p-4"):
                 ui.label("Edit Profile").classes("text-2xl text-center mb-4")
@@ -36,9 +34,9 @@ class UserProfile(BaseLayout):
                 )
 
                 self.username = ui.input(
-                    label="Username",
+                    label="Nickname",
                     value=user.username,
-                    placeholder="Choose a username",
+                    placeholder="Choose a nickname",
                     validation={
                         "Input too long": lambda value: 30 >= len(value),
                         "This field is required": lambda value: len(value) > 0,
@@ -130,6 +128,5 @@ class UserProfile(BaseLayout):
             ui.notify(f"Edit failed: {str(e)}", type="negative")
 
     def logout(self):
-        with suppress(Exception):
-            app.storage.user.clear()
+        user_state.clear_all()
         ui.navigate.to("/ui/login")

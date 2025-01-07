@@ -1,6 +1,6 @@
-from nicegui import ui, app, context
+from nicegui import ui
 from nice_gui.pages.ai_page_base import AIPageBase
-from nice_gui.state.user_state import get_user_state
+from nice_gui.state.user_state import user_state
 import asyncio
 
 
@@ -23,11 +23,17 @@ class Sidebar(AIPageBase):
     async def initialize(self):
         """Initialize user data and theme"""
         # Get user state for current context
-        self.user_state = get_user_state()
         await self.load_user_data()
         # Ensure theme initialization is within UI context
         with self.async_ui_card:  # Create a proper UI context container
             await self.initialize_theme()
+
+        # Get user information
+        user = await user_state.get_user(self.api_client)
+        # If user is administrator, display admin icon on the right of the user_label
+        if user and user.is_admin:
+            with self.user_label:
+                ui.icon("admin_panel_settings").classes("text-3xl dark:text-gray-400")
 
     def setup_sidebar(self):
         """Setup the sidebar UI"""
@@ -135,7 +141,7 @@ class Sidebar(AIPageBase):
         """Initialize theme from user settings"""
         try:
             # Get user state and settings
-            user_settings = await self.user_state.get_user_settings(self.api_client)
+            user_settings = await user_state.get_user_settings(self.api_client)
             self.dark_mode = user_settings.dark_mode
 
             # Apply the stored theme
@@ -144,7 +150,7 @@ class Sidebar(AIPageBase):
         except Exception as e:
             print(f"Error loading theme settings: {e}")
             # Use local storage as fallback
-            self.dark_mode = app.storage.user.get("dark_mode", False)
+            self.dark_mode = await user_state.get_user_settings().dark_mode
             # Apply theme change
             self.apply_theme_change()
 
@@ -154,12 +160,9 @@ class Sidebar(AIPageBase):
             self.dark_mode = not self.dark_mode
 
             # Update user settings through user state
-            await self.user_state.update_user_settings(
+            await user_state.update_user_settings(
                 self.api_client, dark_mode=self.dark_mode
             )
-
-            # Update local storage as backup
-            app.storage.user.update({"dark_mode": self.dark_mode})
 
             # Apply theme change
             self.apply_theme_change()
@@ -181,7 +184,7 @@ class Sidebar(AIPageBase):
     async def load_user_data(self):
         """Load user data and update UI"""
         try:
-            user = await self.user_state.fetch_user(self.api_client)
+            user = await user_state.fetch_user(self.api_client)
             if user:
                 self.user_label.text = user.email
                 self.user_label.tooltip = f"Logged in as {user.full_name}"
