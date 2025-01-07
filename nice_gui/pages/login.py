@@ -16,7 +16,7 @@ class LoginPage:
             with ui.row().classes("w-full gap-2 mt-4"):
                 ui.button("Login", on_click=self.handle_login).classes("flex-grow")
                 ui.button(
-                    "Register", on_click=lambda: ui.navigate.to("/register")
+                    "Register", on_click=lambda: ui.navigate.to("/ui/register")
                 ).classes("bg-green-500")
 
             # Setup enter key handler for password field
@@ -34,7 +34,7 @@ class LoginPage:
                 # Call login API
                 result = await self.api_client.post(
                     "/api/auth/login_for_access_token",
-                    False,
+                    True,
                     data={
                         "username": self.username.value,
                         "password": self.password.value,

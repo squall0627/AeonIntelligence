@@ -19,4 +19,5 @@ class User(Base):
     username = Column(NVARCHAR(255), nullable=False)
     full_name = Column(NVARCHAR(255), nullable=True)
     hashed_password = Column(String(255), nullable=False)
+    is_admin = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)

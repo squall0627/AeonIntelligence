@@ -7,6 +7,7 @@ from nice_gui.pages.chat.chat import Chat
 # Import page components
 from nice_gui.pages.login import LoginPage
 from nice_gui.pages.knowledge_warehouse.knowledge import KnowledgePage
+from nice_gui.pages.profile.register import UserRegister
 from nice_gui.pages.profile.user_profile import UserProfile
 from nice_gui.pages.translation.translation import TranslationPage
 
@@ -22,12 +23,12 @@ app.add_static_files("/static", STATIC_PATH)
 def auth_required():
     if not app.storage.user.get("authenticated", False):
         # Store the current path as string for redirect after login
-        # current_path = str(ui.page.path)  # Convert to string
-        # with suppress(Exception):  # Safely update storage
-        #     if ui.page.path is not None:
-        #         app.storage.user.update({'redirect': ui.page.path})
+        current_path = ui.context.client.page.path  # Convert to string
+        with suppress(Exception):  # Safely update storage
+            if current_path is not None:
+                app.storage.user.update({"redirect": current_path})
         # Redirect to login page
-        ui.navigate.to("/ui")
+        ui.navigate.to("/ui/login")
         return True
     return False
 
@@ -67,6 +68,10 @@ class Application:
         def profile_page():
             if not auth_required():  # Only render if authenticated
                 UserProfile()
+
+        @ui.page("/ui/register", title="User Register")
+        def user_register_page():
+            UserRegister()
 
 
 if __name__ in {"__main__", "__mp_main__"}:

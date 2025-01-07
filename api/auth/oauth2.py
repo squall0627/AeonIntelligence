@@ -32,6 +32,7 @@ class User(BaseModel):
     username: str
     email: str
     full_name: Optional[str] = None
+    is_admin: Optional[bool] = False
     disabled: Optional[bool] = False
 
 
@@ -170,6 +171,7 @@ def create_user(
         email=email,
         full_name=full_name,
         hashed_password=hashed_password,
+        is_admin=False,
         is_active=True,
     )
 
@@ -177,7 +179,14 @@ def create_user(
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-        return db_user
+        return UserInDB(
+            username=db_user.username,
+            email=db_user.email,
+            full_name=db_user.full_name,
+            is_admin=db_user.is_admin,
+            disabled=not db_user.is_active,
+            hashed_password=db_user.hashed_password,
+        )
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="Error creating user")
@@ -201,6 +210,7 @@ def get_user_by_email(email: str, db: Session = Depends(get_db)):
             username=user.username,
             email=user.email,
             full_name=user.full_name,
+            is_admin=user.is_admin,
             disabled=not user.is_active,
             hashed_password=user.hashed_password,
         )

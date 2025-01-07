@@ -13,9 +13,9 @@ class APIClient:
         self.base_url = base_url
         self.headers = {}
 
-    def set_token(self, token: str):
+    def set_token(self, token: str, token_type: str = "Bearer"):
         """Set the authentication token for subsequent requests"""
-        self.headers["Authorization"] = f"Bearer {token}"
+        self.headers["Authorization"] = f"{token_type} {token}"
 
     async def get(
         self,
@@ -25,13 +25,13 @@ class APIClient:
         params: Optional[Dict[str, Any]] = None,
     ) -> Optional[Dict]:
         """Make a GET request to the API"""
-
         if need_auth:
             # Get auth token from storage
             auth_token = app.storage.user.get("access_token")
-            if not auth_token:
-                raise Exception("Not authenticated")
-            self.set_token(auth_token)
+            token_type = app.storage.user.get("token_type")
+            if auth_token:
+                # raise Exception("Not authenticated")
+                self.set_token(auth_token, token_type)
         else:
             self.headers.pop("Authorization", None)
 
@@ -75,9 +75,10 @@ class APIClient:
         if need_auth:
             # Get auth token from storage
             auth_token = app.storage.user.get("access_token")
-            if not auth_token:
-                raise Exception("Not authenticated")
-            self.set_token(auth_token)
+            token_type = app.storage.user.get("token_type")
+            if auth_token:
+                # raise Exception("Not authenticated")
+                self.set_token(auth_token, token_type)
         else:
             self.headers.pop("Authorization", None)
 
@@ -123,9 +124,10 @@ class APIClient:
         if need_auth:
             # Get auth token from storage
             auth_token = app.storage.user.get("access_token")
-            if not auth_token:
-                raise Exception("Not authenticated")
-            self.set_token(auth_token)
+            token_type = app.storage.user.get("token_type")
+            if auth_token:
+                # raise Exception("Not authenticated")
+                self.set_token(auth_token, token_type)
         else:
             self.headers.pop("Authorization", None)
 
