@@ -19,9 +19,9 @@ class TranslationPage(BaseLayout):
 
         with ui.tab_panels(tabs, value="Text").classes("w-full"):
             with ui.tab_panel("Text"):
-                self.local_ui(TextTranslationPage(), "TextTranslationPage")
+                TextTranslationPage()
             with ui.tab_panel("File"):
-                self.local_ui(FileTranslationPage(), "FileTranslationPage")
+                FileTranslationPage()
 
     def localize_page_title(self):
         self.get_current_page().title = t("translator.title")

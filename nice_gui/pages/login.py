@@ -49,6 +49,9 @@ class LoginPage:
                     )
                     user_state.update_auth(**result)
 
+                    # Load User and User_settings information
+                    await self.load_user_data()
+
                     # Navigate to redirect path or default to knowledge page
                     # redirect_path = app.storage.user.get("redirect", "/ui/chat")
                     redirect_path = user_state.get_redirect_path("/ui/chat")
@@ -61,3 +64,7 @@ class LoginPage:
 
         except Exception as e:
             ui.notify(f"Login error: {str(e)}", type="negative")
+
+    async def load_user_data(self):
+        await user_state.get_user(self.api_client)
+        await user_state.get_user_settings(self.api_client)

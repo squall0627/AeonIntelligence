@@ -1,7 +1,6 @@
 import pyperclip
 from nicegui import ui
 
-from nice_gui.i18n import t
 from nice_gui.pages.ai_page_base import AIPageBase
 
 
@@ -35,7 +34,7 @@ class TextTranslationPage(AIPageBase):
                 # Source text area
                 with ui.column().classes("flex-1"):
                     self.local_ui(
-                        ui.label(t("translator.text_tab.label.source_text")),
+                        ui.label(),
                         "translator.text_tab.label.source_text",
                     ).classes("text-lg font-bold")
                     self.source_text = self.wrap_ui(
@@ -46,7 +45,7 @@ class TextTranslationPage(AIPageBase):
                 with ui.column().classes("flex-1"):
                     with ui.row().classes("items-center justify-between"):
                         self.local_ui(
-                            ui.label(t("translator.text_tab.label.translation_result")),
+                            ui.label(),
                             "translator.text_tab.label.translation_result",
                         ).classes("text-lg font-bold")
                         self.wrap_ui(
@@ -64,7 +63,6 @@ class TextTranslationPage(AIPageBase):
                     self.wrap_ui(
                         self.local_ui(
                             ui.button(
-                                t(f"translator.button.{task_id}"),
                                 on_click=self.submit_handler(
                                     lambda tt=task_id: self.submit_translation_text(tt)
                                 ),
@@ -78,7 +76,7 @@ class TextTranslationPage(AIPageBase):
             # History section header with refresh button
             with ui.row().classes("w-full items-center justify-between"):
                 self.local_ui(
-                    ui.label(t("translator.text_tab.label.translation_history")),
+                    ui.label(),
                     "translator.text_tab.label.translation_history",
                 ).classes("text-xl font-bold")
                 self.wrap_ui(

@@ -1,12 +1,12 @@
-import abc
 import asyncio
 from abc import ABC
 from typing import Callable, Any, Awaitable
 
-from nicegui import ui, page
+from nicegui import ui, page, app
 from nicegui.awaitable_response import AwaitableResponse
 from nicegui.element import Element
 from nicegui.elements.mixins.disableable_element import DisableableElement
+from nicegui.elements.mixins.text_element import TextElement
 
 from nice_gui.i18n import t
 from nice_gui.utils.api_client import APIClient
@@ -24,8 +24,6 @@ class AIPageBase(ABC):
         self.disabled_ctl.enable()
         # Init component wrapper
         self.component_wrapper = ComponentWrapper(self)
-        # refresh ui list
-        self.refresh_ui_list: dict[str, list[Element]] = {}
 
     def localize_page_title(self):
         pass
@@ -44,14 +42,13 @@ class AIPageBase(ABC):
         return self.component_wrapper.wrap(ui_element)
 
     def local_ui(self, ui_element: Element, local_key: str):
-        self.refresh_ui_list.setdefault(local_key, []).append(ui_element)
+        if isinstance(ui_element, TextElement):
+            ui_element.bind_text_from(
+                app.storage.user.get("user_settings"),
+                "language",
+                lambda x: t(local_key),
+            )
         return ui_element
-
-    def localize(self):
-        for local_key, ui_elements in self.refresh_ui_list.items():
-            for ui_element in ui_elements:
-                ui_element.text = t(local_key)
-        self.localize_page_title()
 
     async def submit(self, func: Callable[[], Any], lock_ui: bool = True):
         try:
