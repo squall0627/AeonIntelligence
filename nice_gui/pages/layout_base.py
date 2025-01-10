@@ -11,7 +11,6 @@ class BaseLayout(AIPageBase):
 
     def __init__(self):
         super().__init__()
-        self.local_contents = []
         with ui.header().classes(replace="row items-center"):
             ui.button(on_click=lambda: self.sidebar.toggle(), icon="menu").props(
                 "flat color=white"

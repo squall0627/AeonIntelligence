@@ -33,6 +33,7 @@ class UserState:
 
     async def fetch_user(self, api_client) -> Optional[User]:
         """Fetch current user data from API"""
+
         try:
             user_data = await api_client.get("/api/auth/users/me")
             app.storage.user.update(
@@ -57,6 +58,8 @@ class UserState:
             return None
 
     def get_auth(self) -> Optional[Auth]:
+        """Get authentication data from storage"""
+
         if app.storage.user.get("auth"):
             return Auth(
                 authenticated=app.storage.user.get("auth").get("authenticated", False),
@@ -68,6 +71,8 @@ class UserState:
             return None
 
     def update_auth(self, **auth):
+        """Update authentication data in storage"""
+
         app.storage.user.update(
             {
                 "auth": {
@@ -80,11 +85,21 @@ class UserState:
         )
 
     def clear_auth(self):
+        """Clear authentication data from storage"""
+
         with suppress(Exception):
             app.storage.user.pop("auth")
 
-    async def get_user(self, api_client) -> Optional[User]:
-        # return self.current_user
+    async def aget_user(self, api_client) -> Optional[User]:
+        """Get current user data from storage or API"""
+
+        user = self.get_user()
+        if not user:
+            return await self.fetch_user(api_client)
+
+    def get_user(self) -> Optional[User]:
+        """Get current user data from storage"""
+
         if app.storage.user.get("user"):
             return User(
                 email=app.storage.user.get("user").get("email", ""),
@@ -93,13 +108,15 @@ class UserState:
                 is_admin=app.storage.user.get("user").get("is_admin", False),
             )
         else:
-            return await self.fetch_user(api_client)
+            return None
 
     def clear_user(self):
+        """Clear user data from storage"""
+
         with suppress(Exception):
             app.storage.user.pop("user")
 
-    async def get_user_settings(self, api_client) -> UserSettings:
+    async def aget_user_settings(self, api_client) -> UserSettings:
         """Get user settings for current user"""
 
         if not app.storage.user.get("user"):
@@ -119,8 +136,21 @@ class UserState:
             setattr(current_settings, key, value)
         return current_settings
 
+    def get_user_settings(self) -> UserSettings:
+        """Get user settings for current user"""
+
+        if not self.get_user():
+            return UserSettings()
+
+        current_settings = UserSettings()
+        user_settings = app.storage.user.get("user_settings")
+        if user_settings:
+            for key, value in user_settings.items():
+                setattr(current_settings, key, value)
+        return current_settings
+
     async def update_user_settings(self, api_client, **settings):
-        """Update settings for current user"""
+        """Update user settings for current user"""
 
         if not app.storage.user.get("user"):
             return None
@@ -138,34 +168,26 @@ class UserState:
             raise
 
     def clear_user_settings(self):
+        """Clear user settings from storage"""
+
         with suppress(Exception):
             app.storage.user.pop("user_settings")
 
     def update_redirect_path(self, redirect_path: str):
+        """Update redirect path in storage"""
+
         app.storage.user.update("redirect", redirect_path)
 
     def get_redirect_path(self, default="/ui/chat"):
+        """Get redirect path from storage"""
+
         return app.storage.user.get("redirect", default)
 
     def clear_all(self):
+        """Clear all user data from storage"""
         self.clear_auth()
         self.clear_user()
         self.clear_user_settings()
-        # app.storage.user.clear()
-
-
-# # Create a context variable for user state
-# user_state_var: ContextVar[UserState] = ContextVar("user_state")
-#
-#
-# def get_user_state() -> UserState:
-#     """Get or create user state for current context"""
-#     try:
-#         return user_state_var.get()
-#     except LookupError:
-#         state = UserState()
-#         user_state_var.set(state)
-#         return state
 
 
 # Initialize global instance (for backward compatibility)

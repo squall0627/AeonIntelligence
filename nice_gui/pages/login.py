@@ -66,5 +66,5 @@ class LoginPage:
             ui.notify(f"Login error: {str(e)}", type="negative")
 
     async def load_user_data(self):
-        await user_state.get_user(self.api_client)
-        await user_state.get_user_settings(self.api_client)
+        await user_state.aget_user(self.api_client)
+        await user_state.aget_user_settings(self.api_client)

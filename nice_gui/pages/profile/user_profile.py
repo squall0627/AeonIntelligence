@@ -15,7 +15,7 @@ class UserProfile(BaseLayout):
         await self.setup_register_page()
 
     async def setup_register_page(self):
-        user = await user_state.get_user(self.api_client)
+        user = await user_state.aget_user(self.api_client)
         if user:
             with ui.card().classes("w-96 mx-auto mt-8 p-4"):
                 ui.label("Edit Profile").classes("text-2xl text-center mb-4")
