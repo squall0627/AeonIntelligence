@@ -43,6 +43,8 @@ class LLMName(str, Enum):
     qwen_2_5_32b = "qwen2.5:32b"
     qwen_2_5_32b_translator = "qwen2.5:32b-translator"
     qwen_2_5_14b = "qwen2.5:14b"
+    deepseek_r1_14b = "deepseek-r1:14b"
+    deepseek_r1_32b = "deepseek-r1:32b"
 
 
 DEFAULT_LLM_NAME = LLMName.mistral_small
@@ -55,6 +57,7 @@ class DefaultModelSuppliers(str, Enum):
     META = "meta"
     MISTRAL = "mistral"
     ALIBABA = "alibaba"
+    DEEPSEEK = "deepseek"
 
 
 class LLMConfig(AIBaseConfig):
@@ -157,6 +160,10 @@ class LLMModelConfig:
             LLMName.qwen_2_5_32b: LLMConfig(context=128000, tokenizer_hub=""),
             LLMName.qwen_2_5_32b_translator: LLMConfig(context=128000, tokenizer_hub=""),
             LLMName.qwen_2_5_14b: LLMConfig(context=128000, tokenizer_hub=""),
+        },
+        DefaultModelSuppliers.DEEPSEEK: {
+            LLMName.deepseek_r1_14b: LLMConfig(context=128000, tokenizer_hub=""),
+            LLMName.deepseek_r1_32b: LLMConfig(context=128000, tokenizer_hub=""),
         },
     }
 

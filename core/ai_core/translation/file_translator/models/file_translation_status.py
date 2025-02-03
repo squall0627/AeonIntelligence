@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Optional, Self
+import json
 
 import redis
 from pydantic import BaseModel
@@ -16,10 +17,25 @@ class Status(str, Enum):
 class FileTranslationStatus(BaseModel):
     task_id: str
     status: Status
-    progress: int
+    progress: float = 0.0
     output_file_path: Optional[str] = None
     duration: Optional[float] = None
     error: Optional[str] = None
+
+    def to_dict(self) -> dict:
+        """Convert the status object to a dictionary for JSON serialization"""
+        return {
+            "task_id": self.task_id,
+            "status": self.status.value,  # Convert enum to string
+            "progress": self.progress,
+            "output_file_path": self.output_file_path,
+            "duration": self.duration,
+            "error": self.error,
+        }
+
+    def to_json(self) -> str:
+        """Convert the status object to a JSON string"""
+        return json.dumps(self.to_dict())
 
     @classmethod
     async def exists(

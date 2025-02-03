@@ -69,6 +69,27 @@ class TextTranslator:
 
         return response.content
 
+    async def atranslate(self, input_text: str) -> str:
+        # if input_text is empty, return empty string
+        if not input_text or input_text.strip() == "":
+            return ""
+        # if input_text is "-", return "-"
+        if input_text in ["-", "ー", "‐"]:
+            return input_text
+
+        msg = translation_prompts.SIMPLE_TRANSLATE_PROMPT.format(
+            keywords_map=self.keywords_map,
+            instruction=f"Translate {self.source_language} to {self.target_language}.",
+            input_text=input_text,
+        )
+        logger.debug(f"Message: {msg}")
+
+        # Invoke the model
+        response = await self.llm.llm.ainvoke(msg)
+        logger.debug(f"Response: {response}")
+
+        return response.content
+
     async def astream_translate(self, input_text: str):
         """Stream the translation of the input text."""
         # if input_text is empty, return empty string

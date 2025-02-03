@@ -197,6 +197,8 @@ async def translate_file(
         logger.debug(f"Keywords map: {keywords_map}")
         kwargs = params["kwargs"] if "kwargs" in params else {}
         logger.debug(f"Kwargs: {kwargs}")
+        is_stream = params["is_stream"] if "is_stream" in params else False
+        logger.debug(f"Is stream: {is_stream}")
 
         # Create unique task ID
         task_id = f"{datetime.now().timestamp()}_{file.filename}"
@@ -223,21 +225,54 @@ async def translate_file(
         await status.persist(redis_client)
         logger.info("Redis status persisted OK")
 
-        # Add translation task to background tasks
-        background_tasks.add_task(
-            process_file_translation,
-            status,
-            input_file_path,
-            source_language,
-            target_language,
-            keywords_map,
-            **kwargs,
-        )
+        # Process translation
+        if not is_stream:
+            logger.info("Processing translation as non-streaming")
 
-        logger.info("background_tasks.add_task OK")
+            # Add translation task to background tasks
+            background_tasks.add_task(
+                process_file_translation,
+                status,
+                input_file_path,
+                source_language,
+                target_language,
+                keywords_map,
+                **kwargs,
+            )
 
-        return {"task_id": task_id}
+            logger.info("background_tasks.add_task OK")
 
+            return {"task_id": task_id}
+        else:
+            logger.info("Processing translation as streaming")
+
+            # Create file translator
+            file_translator = FileTranslatorBuilder.build_file_translator(
+                input_file_path,
+                source_language,
+                target_language,
+                status=status,
+                keywords_map=keywords_map,
+                kwargs=kwargs,
+            )
+
+            # Set up the output path for the translated file
+            temp_dir = os.getenv("TEMP_PATH", tempfile.gettempdir())
+            output_dir = os.path.join(temp_dir, TRANSLATED_FOLDER)
+            os.makedirs(output_dir, exist_ok=True)
+
+            return StreamingResponse(
+                file_translator.astream_translate(output_dir),
+                media_type="text/event-stream",
+            )
+
+        # TODO
+        # delete temp file
+        # finally:
+        #     # Cleanup temporary file
+        #     if status.status == Status.COMPLETED or status.status == Status.ERROR:
+        #         if os.path.exists(input_file_path):
+        #             os.remove(input_file_path)
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

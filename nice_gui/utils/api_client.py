@@ -140,7 +140,10 @@ class APIClient:
 
         # Add is_stream flag
         if data is not None:
-            data.update({"is_stream": True})
+            if "params" in data:
+                params = json_lib.loads(data["params"])
+                params.update({"is_stream": True})
+                data.update({"params": json_lib.dumps(params)})
         if json is not None:
             json.update({"is_stream": True})
 
@@ -170,6 +173,8 @@ class APIClient:
                         raise Exception(f"API error: {response.status_code}")
         except httpx.RequestError as e:
             raise Exception(f"API error: {str(e)}")
+        except Exception as e:
+            raise Exception(f"Other exception: {str(e)}")
 
     def params_validation(
         self,
@@ -187,3 +192,45 @@ class APIClient:
                 data = {"params": json_lib.dumps(json)}
             json = None
         return data, json, files
+
+    async def get_file(
+        self,
+        endpoint: str,
+        need_auth: bool = True,
+        *,
+        params: Optional[Dict[str, Any]] = None,
+    ) -> bytes:
+        """Make a GET File request to the API"""
+        if need_auth:
+            # Get auth token from storage
+            auth = user_state.get_auth()
+            if auth:
+                auth_token = auth.access_token
+                token_type = auth.token_type
+                if auth_token:
+                    # raise Exception("Not authenticated")
+                    self.set_token(auth_token, token_type)
+        else:
+            self.headers.pop("Authorization", None)
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.base_url}{endpoint}",
+                    params=params,
+                    headers=self.headers,
+                    timeout=60,
+                )
+
+                if response.status_code == 401:
+                    raise Exception("Authentication expired")
+                elif response.status_code == 403:
+                    raise Exception("Permission denied")
+                elif response.status_code == 422:
+                    raise Exception("Invalid request format")
+                elif response.status_code == 200:
+                    return response.read()
+                else:
+                    raise Exception(f"File download error: {response.status_code}")
+        except httpx.RequestError as e:
+            raise Exception(f"File download error: {str(e)}")

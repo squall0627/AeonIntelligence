@@ -1,12 +1,12 @@
+import asyncio
 import os
-import math
 
 from enum import Enum
 
 
-from concurrent.futures import ThreadPoolExecutor
 from io import StringIO
 from pathlib import Path
+from typing import AsyncGenerator, Any
 
 import pptx
 from pptx.enum.text import MSO_AUTO_SIZE
@@ -16,6 +16,9 @@ from core.ai_core.translation.file_translator.file_translator_base import (
 )
 from core.ai_core.translation.file_translator.file_translator_type import (
     FileTranslatorType,
+)
+from core.ai_core.translation.file_translator.models.file_translation_status import (
+    FileTranslationStatus,
 )
 from core.ai_core.translation.language import Language
 from core.utils.log_handler import rotating_file_logger
@@ -48,117 +51,44 @@ def translate_texts(texts, translator):
 class PPTXTranslator(FileTranslatorBase):
     def __init__(self):
         super().__init__(FileTranslatorType.PPTX)
+        self.ppt = None
 
-    async def translate_impl(self, output_dir: Path | str) -> Path | str:
+    async def translate_impl(
+        self, output_dir: Path | str
+    ) -> AsyncGenerator[FileTranslationStatus, Any]:
         logger.info(
             f"Translating {self.input_file_path} to {output_dir} by PPTXTranslator"
         )
 
-        run_parallely = self.kwargs.get("run_parallely", True)
+        # run_parallely = self.kwargs.get("run_parallely", False)
         target_slide_index = self.kwargs.get("target_pages", None)
 
-        text_translator = self.text_translator
-        ppt = pptx.Presentation(self.input_file_path)
+        # text_translator = self.text_translator
+        self.ppt = pptx.Presentation(self.input_file_path)
 
-        logger.info(
-            f"translating slides {'parallely' if run_parallely else 'sequentially'}"
-        )
         slide_index = 0
-        if run_parallely:
-            # run parallely
-            target_slides = []
-            for slide in ppt.slides:
-                if target_slide_index is None or slide_index in target_slide_index:
-                    target_slides.append(slide)
-
-                slide_index += 1
-
-            # Extract all slide texts
-            slides_texts = [
-                self._translate_slide(slide, TranslationMode.EXTRACT)
-                for slide in target_slides
-            ]
-
-            # Translate texts in parallel
-            with ThreadPoolExecutor(max_workers=8) as executor:
-                futures = {}
-                for idx, texts in enumerate(slides_texts):
-                    futures[idx] = {
-                        "task": executor.submit(
-                            translate_texts, texts, text_translator
-                        ),
-                        "status": "pending",
-                    }
-
+        translated_slide_count = 0
+        for slide in self.ppt.slides:
+            if target_slide_index is None or slide_index in target_slide_index:
                 try:
-                    # Gather the results
-                    while sum(
-                        1 for _, future in futures.items() if future["status"] == "done"
-                    ) < len(futures.keys()):
-                        for idx, future_task in futures.items():
-                            if (
-                                future_task["task"].done()
-                                and future_task["status"] == "pending"
-                            ):
-                                translated_texts = future_task["task"].result()
-                                # Replace the translated content back in slides
-                                self._translate_slide(
-                                    target_slides[idx],
-                                    TranslationMode.REPLACE,
-                                    translated_texts,
-                                )
-                                future_task["status"] = "done"
-
-                                # completion rate compute
-                                self.status.progress = math.floor(
-                                    sum(
-                                        1
-                                        for _, future in futures.items()
-                                        if future["status"] == "done"
-                                    )
-                                    / len(futures.keys())
-                                    * 100
-                                )
-                                await self.status.persist()
+                    await self._translate_slide(slide, TranslationMode.TRANSLATE)
                 except Exception as e:
                     logger.error(e)
-                    print(e)
-        else:
-            # run sequentially
-            translated_slide_count = 0
-            for slide in ppt.slides:
-                if target_slide_index is None or slide_index in target_slide_index:
-                    self._translate_slide(slide, TranslationMode.TRANSLATE)
-                    translated_slide_count += 1
-                    # completion rate compute
-                    self.status.progress = math.floor(
-                        translated_slide_count
-                        / len(
-                            target_slide_index
-                            if target_slide_index is not None
-                            else ppt.slides
-                        )
-                        * 100
-                    )
-                    await self.status.persist()
-                slide_index += 1
+                    self.status.error = str(e)
+                translated_slide_count += 1
+                self.status.progress = translated_slide_count / len(
+                    target_slide_index
+                    if target_slide_index is not None
+                    else self.ppt.slides
+                )
+                yield self.status
 
-        logger.debug(">>> Translating input file name")
-        # translate the input file name
-        input_file_name = Path(self.input_file_path).name
-        output_file_name = text_translator.translate(input_file_name)
-        output_path = os.path.join(output_dir, output_file_name)
+            slide_index += 1
 
-        # save translated file
-        ppt.save(output_path)
-        self.status.progress = 100
-        await self.status.persist()
+        await self._translate_file_name(output_dir)
+        yield self.status
 
-        logger.info(f"Translated {self.input_file_path} save to {output_path}")
-
-        return output_path
-
-    def _translate_slide(
+    async def _translate_slide(
         self, slide, mode: TranslationMode, translated_texts: list | None = None
     ) -> list:
         text_translator = self.text_translator
@@ -395,3 +325,14 @@ class PPTXTranslator(FileTranslatorBase):
         #     logger.warn(
         #         f"Warning: Text does not fit into the shape within the minimum font size of {min_font_size}pt"
         #     )
+
+    async def _translate_file_name(self, output_dir):
+        logger.debug(">>> Translating input file name")
+        # translate the input file name
+        input_file_name = Path(self.input_file_path).name
+        output_file_name = self.text_translator.translate(input_file_name)
+        output_path = os.path.join(output_dir, output_file_name)
+        self.status.output_file_path = str(output_path)
+        # save translated file
+        self.ppt.save(output_path)
+        logger.info(f"Translated {self.input_file_path} save to {output_path}")

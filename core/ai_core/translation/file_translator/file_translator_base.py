@@ -3,7 +3,7 @@ import asyncio
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Self
+from typing import Self, AsyncGenerator, Any
 
 from core.ai_core.translation.file_translator.file_translator_type import (
     FileTranslatorType,
@@ -14,6 +14,7 @@ from core.ai_core.translation.file_translator.models.file_translation_status imp
 )
 from core.ai_core.translation.language import Language
 from core.ai_core.translation.text_translator import TextTranslator
+from core.utils.async_handler import sync_run_task
 from core.utils.log_handler import rotating_file_logger
 
 logger = rotating_file_logger("ai_core")
@@ -34,33 +35,42 @@ class FileTranslatorBase(ABC):
     ):
         self.file_translator_type = file_translator_type
 
-    async def atranslate(self, output_dir: Path | str) -> FileTranslationStatus:
+    async def astream_translate(self, output_dir: Path | str):
+        logger.info(f"Starting translation for {self.input_file_path}")
         sw = stopwatch.Stopwatch()
         sw.start()
 
+        # Initialize the status
         self.status.status = Status.PROCESSING
-        try:
-            output_file_path = await self.translate_impl(output_dir)
-            self.status.output_file_path = output_file_path
-            self.status.status = Status.COMPLETED
-            self.status.progress = 100
-        except Exception as e:
-            self.status.error = str(e)
-            self.status.status = Status.ERROR
+        self.status.progress = 0.0
 
+        async for status in self.translate_impl(output_dir):
+            await status.persist()
+            yield status.to_json()
+            await asyncio.sleep(0.01)
+
+        # Set the status when all tasks done
+        if Status.ERROR != self.status.status:
+            self.status.status = Status.COMPLETED
         sw.stop()
         duration = sw.duration
-        logger.info(f"Translation completed in {duration:.2f} seconds")
         self.status.duration = duration
         await self.status.persist()
+        logger.info(f"Translation completed in {duration:.2f} seconds")
+
+    async def atranslate(self, output_dir: Path | str) -> FileTranslationStatus:
+        async for _ in self.astream_translate(output_dir):
+            pass
         return self.status
 
     def translate(self, output_dir: Path | str) -> FileTranslationStatus:
-        return asyncio.run(self.atranslate(output_dir))
+        return sync_run_task(self.atranslate(output_dir))
 
     @abstractmethod
-    async def translate_impl(self, output_dir: Path | str) -> Path | str:
-        raise NotImplementedError
+    async def translate_impl(
+        self, output_dir: Path | str
+    ) -> AsyncGenerator[FileTranslationStatus, Any]:
+        yield self.status
 
     def build(
         self,
