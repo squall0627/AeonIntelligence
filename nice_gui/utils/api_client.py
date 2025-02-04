@@ -69,6 +69,7 @@ class APIClient:
         data: Optional[Dict[str, Any]] = None,
         json: Optional[typing.Any] = None,
         files: Optional[RequestFiles] = None,
+        params: Optional[Dict[str, Any]] = None,
     ) -> Optional[Dict]:
         """Make a POST request to the API"""
 
@@ -94,6 +95,7 @@ class APIClient:
                     data=data,
                     json=json,
                     files=files,
+                    params=params,
                     headers=self.headers,
                     timeout=60,
                 )
@@ -120,6 +122,7 @@ class APIClient:
         data: Optional[Dict[str, Any]] = None,
         json: Optional[typing.Any] = None,
         files: Optional[RequestFiles] = None,
+        params: Optional[Dict[str, Any]] = None,
     ) -> typing.AsyncGenerator[str, None]:
         """Make a POST request to the API"""
 
@@ -155,6 +158,7 @@ class APIClient:
                     data=data,
                     json=json,
                     files=files,
+                    params=params,
                     headers=self.headers,
                     timeout=60,
                 ) as response:

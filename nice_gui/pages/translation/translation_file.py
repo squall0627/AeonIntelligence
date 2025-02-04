@@ -1,16 +1,12 @@
-import asyncio
 import json as json_lib
 import os
 
 from nicegui import ui, background_tasks
 from nicegui.events import UploadEventArguments, UiEventArguments
-from datetime import datetime
 from typing import Dict
 
-
-from core.ai_core.translation.file_translator.models.file_translation_status import (
-    Status,
-)
+from api.cache.file_translation_status_cache import FileTranslationStatusCache
+from api.cache.redis_handler import get_redis
 from nice_gui.pages.ai_page_base import AIPageBase
 
 
@@ -81,7 +77,9 @@ class FileTranslationPage(AIPageBase):
                     "translator.file_tab.label.translation_history",
                 ).classes("text-xl font-bold")
                 self.wrap_ui(
-                    ui.button("", on_click=self.load_file_history).props("icon=refresh")
+                    ui.button("", on_click=self.load_translation_history).props(
+                        "icon=refresh"
+                    )
                 )
 
             # History table
@@ -89,23 +87,30 @@ class FileTranslationPage(AIPageBase):
                 columns=[
                     {"name": "datetime", "label": "Date Time", "field": "datetime"},
                     {"name": "task", "label": "Task", "field": "task"},
+                    {"name": "duration", "label": "Duration", "field": "duration"},
                     {"name": "source", "label": "Source File", "field": "source"},
-                    {"name": "status", "label": "Status", "field": "status"},
                     {
                         "name": "translated",
                         "label": "Translated File",
                         "field": "translated",
                     },
+                    {"name": "status", "label": "Status", "field": "status"},
                 ],
                 rows=[],
                 row_key="datetime",
             ).classes("w-full")
+
+            # Load history
+            background_tasks.create(self.load_translation_history())
 
     async def submit_translate_files(self, task_id: str):
         """Handle file translation"""
         if not self.uploaded_files:
             ui.notify("Please upload files to translate", type="warning")
             return
+
+        # Clear active translations
+        self.active_translations.clear()
 
         # Start translation tasks without waiting
         for file in self.uploaded_files:
@@ -181,115 +186,15 @@ class FileTranslationPage(AIPageBase):
                         "text-blue-500"
                     )
 
+                    # Save translation to history
+                    await self.create_translation_history(result)
+
                 except Exception as e:
                     status_label.text = f"Translation failed: {str(e)}"
                     status_label.classes("text-red-500")
 
-    def update_processbar(self, processbar, status):
-        """Update process bar with percentage display"""
-        progress = status.get("progress", 0.0)
-        processbar.set_value(progress)
-
-    async def poll_translation_status(self, notification_container):
-        """Poll the translation status every 5 seconds"""
-        try:
-            while True:
-                await asyncio.sleep(5)  # Wait for 5 seconds
-                for task_id in self.processing_task_ids.keys():
-                    # Call the API to get the translation status
-                    try:
-                        # Prepare params
-                        params = {"task_id": task_id}
-                        result = await self.api_client.get(
-                            f"/api/translation/status", params=params
-                        )
-                        self.processing_task_ids[task_id] = result["status"]
-                        status_bar = self.file_status_bars[task_id]
-
-                        # Ensure updates to the UI occur in the context of the container
-                        with notification_container:
-                            self.update_translation_status(
-                                result,
-                                status_bar["status_label"],
-                                status_bar["progress_bar"],
-                                status_bar["download_link"],
-                            )
-
-                    except Exception as e:
-                        # Use shared notification container for error messages
-                        with notification_container:
-                            ui.notify(
-                                f"Get Translation Status API error: {str(e)}",
-                                type="negative",
-                            )
-                        raise  # Optionally re-raise exception
-
-                # Stop polling if all tasks are complete
-                if all(
-                    status != Status.PROCESSING
-                    for status in self.processing_task_ids.values()
-                ):
-                    break
-        except Exception as e:
-            # Final error notification in the shared container
-            with notification_container:
-                ui.notify(f"Translation failed: {str(e)}", type="negative")
-            return
-
-        # Notify completion in the shared container
-        with notification_container:
-            ui.notify("All translations completed!", type="positive")
-
-        # Reset internal variables and load file history
-        self.processing_task_ids = {}
-        self.file_status_bars = {}
-        self.active_translations.clear()
-        self.upload.reset()
-        await self.load_file_history()
-
-        # Notify history loaded
-        with notification_container:
-            ui.notify("History loaded", type="positive")
-
-    def update_translation_status(
-        self, status: dict, status_label, progress_bar, download_link
-    ):
-        """Update translation status"""
-        if status["status"] == Status.COMPLETED:
-            status_label.text = "Completed"
-            status_label.classes("text-green-500")
-            download_link.set_visibility(True)
-            download_link.props(f'href="{status["output_file_path"]}"')
-            download_link.classes("text-blue-500")
-            progress_bar.set_value(1)
-        else:
-            status_label.text = "Translating..."
-            status_label.classes("text-blue-500")
-            progress_bar.set_value(status["progress"])
-            download_link.set_visibility(False)
-            download_link.props('href=""')
-            download_link.classes("")
-
-    async def load_file_history(self):
-        """Load file translation history"""
-        # Call API to get history
-        pass
-
-    async def save_file_history(self, task_id: str, source_file: str, result_file: str):
-        """Save file translation to history"""
-        try:
-            # Call API to save history
-            json = {
-                "task_id": task_id,
-                "source_file": source_file,
-                "result_file": result_file,
-                "datetime": datetime.now().isoformat(),
-                "status": "completed",
-            }
-            await self.api_client.post("/api/translation/history/file", json=json)
-
-        except Exception as e:
-            ui.notify(f"Failed to save history: {str(e)}", type="warning")
+        # Load translation history
+        background_tasks.create(self.load_translation_history())
 
     async def call_file_translation_api(
         self,
@@ -343,3 +248,52 @@ class FileTranslationPage(AIPageBase):
                 ui.notify(f"File rejected", type="negative")
         except Exception as e:
             ui.notify("File rejection error", type="negative")
+
+    def update_processbar(self, processbar, status):
+        """Update process bar with percentage display"""
+        progress = status.get("progress", 0.0)
+        processbar.set_value(progress)
+
+    async def create_translation_history(self, status: dict):
+        """Create translation history"""
+        try:
+            params = {"task_id": status["task_id"]}
+            history = await self.api_client.post(
+                "/api/translation/file/history/create", params=params
+            )
+
+            # Clear the status cache
+            status_cache = FileTranslationStatusCache(get_redis())
+            await status_cache.delete_status(status["task_id"])
+
+            return history
+
+        except Exception as e:
+            raise Exception(f"Create file translation history API error: {str(e)}")
+
+    async def load_translation_history(self):
+        """Load translation history"""
+        try:
+            history_list = await self.api_client.get("/api/translation/file/history")
+
+            # Convert history data to table rows
+            rows = []
+            for history in history_list:
+                rows.append(
+                    {
+                        "datetime": history["date_time"],
+                        "task": history["task_name"],
+                        "duration": f"{history['duration']:.1f}s",
+                        "source": history["source_file_name"],
+                        "translated": history["translated_file_name"] or "-",
+                        "status": history["status"],
+                    }
+                )
+
+            # Update the table with new rows
+            self.file_history_table.rows = rows
+            self.file_history_table.update()
+
+        except Exception as e:
+            ui.notify(f"Failed to load history: {str(e)}", type="negative")
+            raise Exception(f"Get file translation history API error: {str(e)}")

@@ -18,14 +18,17 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 from fastapi.responses import StreamingResponse
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 from datetime import datetime
 
-from werkzeug.utils import secure_filename
+from sqlalchemy.orm import Session
 
+from api.auth.oauth2 import get_current_user, User
 from api.cache.file_translation_status_cache import FileTranslationStatusCache
 from api.cache.redis_handler import get_redis
+from api.db.dao.file_translation_history_dao import FileTranslationHistoryDao
+from api.db.database import get_db
 from core.ai_core.translation.file_translator.models.file_translation_status import (
     FileTranslationStatus,
     Status,
@@ -207,7 +210,8 @@ async def translate_file(
         task_id = f"{datetime.now().timestamp()}_{file.filename}"
 
         # Ensure the uploaded file has a safe and valid name
-        filename = secure_filename(file.filename)
+        # filename = secure_filename(file.filename)
+        filename = file.filename
 
         # Save the uploaded file to a temporary system location
         temp_dir = os.getenv("TEMP_PATH", tempfile.gettempdir())
@@ -222,7 +226,11 @@ async def translate_file(
 
         # Initialize translation status
         status = FileTranslationStatus(
-            task_id=task_id, status=Status.PROCESSING, progress=0
+            task_id=task_id,
+            task_name=f"{source_language}➡︎{target_language}",
+            input_file_path=input_file_path,
+            status=Status.PROCESSING,
+            progress=0,
         )
 
         status_cache = FileTranslationStatusCache(redis_client)
@@ -532,3 +540,105 @@ def process_file_translation(
         # Cleanup temporary file
         if os.path.exists(file_path):
             os.remove(file_path)
+
+
+# File translation history response model
+class FileTranslationHistoryResponse(BaseModel):
+    id: int
+    user_id: str
+    task_id: str
+    task_name: str
+    date_time: datetime
+    source_file_name: str
+    source_file_path: str
+    translated_file_name: Optional[str]
+    translated_file_path: Optional[str]
+    status: str
+    duration: float
+    error: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+@router.post("/file/history/create", response_model=FileTranslationHistoryResponse)
+async def create_file_translation_history(
+    task_id: str,
+    current_user: User = Depends(get_current_user),
+    credentials: dict = Depends(auth_middleware),
+    db: Session = Depends(get_db),
+    redis_client: redis.Redis = Depends(get_redis),
+):
+    """
+    Insert file translation status into history
+    """
+    try:
+        # Get user_id from credentials
+        user_id = current_user.email
+
+        # Get translation status from cache
+        status_cache = FileTranslationStatusCache(redis_client)
+        status = await status_cache.get_status(task_id)
+
+        if not status:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Translation status not found for task_id: {task_id}",
+            )
+
+        # Create history dao
+        history_dao = FileTranslationHistoryDao(db)
+
+        # Insert into history
+        history = await history_dao.insert(
+            user_id=user_id,
+            task_id=task_id,
+            task_name=status.task_name,
+            source_file_name=(
+                os.path.basename(status.input_file_path)
+                if status.input_file_path
+                else ""
+            ),
+            source_file_path=status.input_file_path or "",
+            translated_file_name=(
+                os.path.basename(status.output_file_path)
+                if status.output_file_path
+                else None
+            ),
+            translated_file_path=status.output_file_path,
+            status=status.status.value,
+            duration=status.duration or 0.0,
+            error=status.error,
+        )
+
+        return history
+
+    except Exception as e:
+        logger.error(f"Error inserting translation history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/file/history", response_model=List[FileTranslationHistoryResponse])
+async def get_file_translation_history(
+    current_user: User = Depends(get_current_user),
+    credentials: dict = Depends(auth_middleware),
+    db: Session = Depends(get_db),
+):
+    """
+    Get all translation history for the user
+    """
+    try:
+        # Get user_id from credentials
+        user_id = current_user.email
+
+        # Create history dao
+        history_dao = FileTranslationHistoryDao(db)
+
+        # Get all history for user
+        histories = await history_dao.get_by_user_id(user_id)
+
+        return histories
+
+    except Exception as e:
+        logger.error(f"Error getting translation history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
