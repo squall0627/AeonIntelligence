@@ -1,6 +1,8 @@
+import asyncio
 import json
 import os
 import tempfile
+from pathlib import Path
 
 import redis
 import stopwatch
@@ -22,6 +24,7 @@ from datetime import datetime
 
 from werkzeug.utils import secure_filename
 
+from api.cache.file_translation_status_cache import FileTranslationStatusCache
 from api.cache.redis_handler import get_redis
 from core.ai_core.translation.file_translator.models.file_translation_status import (
     FileTranslationStatus,
@@ -222,7 +225,8 @@ async def translate_file(
             task_id=task_id, status=Status.PROCESSING, progress=0
         )
 
-        await status.persist(redis_client)
+        status_cache = FileTranslationStatusCache(redis_client)
+        await status_cache.set_status(status)
         logger.info("Redis status persisted OK")
 
         # Process translation
@@ -262,7 +266,7 @@ async def translate_file(
             os.makedirs(output_dir, exist_ok=True)
 
             return StreamingResponse(
-                file_translator.astream_translate(output_dir),
+                astream_translate(file_translator, output_dir, status_cache),
                 media_type="text/event-stream",
             )
 
@@ -276,6 +280,15 @@ async def translate_file(
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+async def astream_translate(
+    file_translator, output_dir: Path | str, status_cache: FileTranslationStatusCache
+):
+    async for status in file_translator.astream_translate(output_dir):
+        await status_cache.set_status(status)
+        yield status.model_dump_json()
+        await asyncio.sleep(0.01)
 
 
 @router.post("/file/ja_to_zh")

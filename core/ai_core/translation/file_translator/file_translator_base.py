@@ -45,8 +45,7 @@ class FileTranslatorBase(ABC):
         self.status.progress = 0.0
 
         async for status in self.translate_impl(output_dir):
-            await status.persist()
-            yield status.to_json()
+            yield status
             await asyncio.sleep(0.01)
 
         # Set the status when all tasks done
@@ -55,7 +54,8 @@ class FileTranslatorBase(ABC):
         sw.stop()
         duration = sw.duration
         self.status.duration = duration
-        await self.status.persist()
+        yield self.status
+        await asyncio.sleep(0.01)
         logger.info(f"Translation completed in {duration:.2f} seconds")
 
     async def atranslate(self, output_dir: Path | str) -> FileTranslationStatus:
