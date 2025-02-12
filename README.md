@@ -10,15 +10,23 @@ pipenv run streamlit run app.py
 ## Load the plist file
 launchctl load ~/Library/LaunchAgents/com.aeon.intelligence.gunicorn.plist
 launchctl load ~/Library/LaunchAgents/com.aeon.intelligence.ui.plist
+launchctl load ~/Library/LaunchAgents/com.aeon.intelligence.nicegui.plist
+launchctl load ~/Library/LaunchAgents/com.aeon.intelligence.uvicorn.plist
 ## Start the service
 launchctl start com.aeon.intelligence.gunicorn
 launchctl start com.aeon.intelligence.ui
+launchctl start com.aeon.intelligence.nicegui
+launchctl start com.aeon.intelligence.uvicorn
 ## Stop the service
 launchctl stop com.aeon.intelligence.gunicorn
 launchctl stop com.aeon.intelligence.ui
+launchctl stop com.aeon.intelligence.nicegui
+launchctl stop com.aeon.intelligence.uvicorn
 ## Verify the Service
 launchctl list | grep com.aeon.intelligence.gunicorn
 launchctl list | grep com.aeon.intelligence.ui
+launchctl list | grep com.aeon.intelligence.nicegui
+launchctl list | grep com.aeon.intelligence.uvicorn
 
 
 # Install nginx

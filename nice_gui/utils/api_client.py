@@ -160,7 +160,7 @@ class APIClient:
                     files=files,
                     params=params,
                     headers=self.headers,
-                    timeout=60,
+                    timeout=300,
                 ) as response:
                     if response.status_code == 401:
                         raise Exception("Authentication expired")
@@ -223,7 +223,7 @@ class APIClient:
                     f"{self.base_url}{endpoint}",
                     params=params,
                     headers=self.headers,
-                    timeout=60,
+                    timeout=300,
                 )
 
                 if response.status_code == 401:
