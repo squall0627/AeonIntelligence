@@ -188,6 +188,7 @@ async def translate_file(
     background_tasks: BackgroundTasks,
     params: str = Form(...),
     file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
     credentials: dict = Depends(auth_middleware),
     redis_client: redis.Redis = Depends(get_redis),
 ):
@@ -205,6 +206,9 @@ async def translate_file(
         logger.debug(f"Kwargs: {kwargs}")
         is_stream = params["is_stream"] if "is_stream" in params else False
         logger.debug(f"Is stream: {is_stream}")
+
+        # Get user_id from credentials
+        user_id = current_user.email
 
         # Create unique task ID
         task_id = f"{datetime.now().timestamp()}_{file.filename}"
@@ -234,7 +238,7 @@ async def translate_file(
         )
 
         status_cache = FileTranslationStatusCache(redis_client)
-        await status_cache.set_status(status)
+        await status_cache.set_status(user_id, status)
         logger.info("Redis status persisted OK")
 
         # Process translation
@@ -243,7 +247,9 @@ async def translate_file(
 
             # Add translation task to background tasks
             background_tasks.add_task(
-                process_file_translation,
+                process_file_translation_stream,
+                status_cache,
+                user_id,
                 status,
                 input_file_path,
                 source_language,
@@ -274,7 +280,7 @@ async def translate_file(
             os.makedirs(output_dir, exist_ok=True)
 
             return StreamingResponse(
-                astream_translate(file_translator, output_dir, status_cache),
+                astream_translate(file_translator, output_dir, status_cache, user_id),
                 media_type="text/event-stream",
             )
 
@@ -291,10 +297,13 @@ async def translate_file(
 
 
 async def astream_translate(
-    file_translator, output_dir: Path | str, status_cache: FileTranslationStatusCache
+    file_translator,
+    output_dir: Path | str,
+    status_cache: FileTranslationStatusCache,
+    user_id: str,
 ):
     async for status in file_translator.astream_translate(output_dir):
-        await status_cache.set_status(status)
+        await status_cache.set_status(user_id, status)
         yield status.model_dump_json()
         await asyncio.sleep(0.01)
 
@@ -304,6 +313,7 @@ async def translate_file_ja_to_zh(
     background_tasks: BackgroundTasks,
     params: str = Form(...),
     file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
     credentials: dict = Depends(auth_middleware),
     redis_client: redis.Redis = Depends(get_redis),
 ):
@@ -321,7 +331,7 @@ async def translate_file_ja_to_zh(
 
     params = json.dumps(params)
     return await translate_file(
-        background_tasks, params, file, credentials, redis_client
+        background_tasks, params, file, current_user, credentials, redis_client
     )
 
 
@@ -330,6 +340,7 @@ async def translate_file_ja_to_en(
     background_tasks: BackgroundTasks,
     params: str = Form(...),
     file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
     credentials: dict = Depends(auth_middleware),
     redis_client: redis.Redis = Depends(get_redis),
 ):
@@ -347,7 +358,7 @@ async def translate_file_ja_to_en(
 
     params = json.dumps(params)
     return await translate_file(
-        background_tasks, params, file, credentials, redis_client
+        background_tasks, params, file, current_user, credentials, redis_client
     )
 
 
@@ -356,6 +367,7 @@ async def translate_file_zh_to_ja(
     background_tasks: BackgroundTasks,
     params: str = Form(...),
     file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
     credentials: dict = Depends(auth_middleware),
     redis_client: redis.Redis = Depends(get_redis),
 ):
@@ -373,7 +385,7 @@ async def translate_file_zh_to_ja(
 
     params = json.dumps(params)
     return await translate_file(
-        background_tasks, params, file, credentials, redis_client
+        background_tasks, params, file, current_user, credentials, redis_client
     )
 
 
@@ -382,6 +394,7 @@ async def translate_file_zh_to_en(
     background_tasks: BackgroundTasks,
     params: str = Form(...),
     file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
     credentials: dict = Depends(auth_middleware),
     redis_client: redis.Redis = Depends(get_redis),
 ):
@@ -399,7 +412,7 @@ async def translate_file_zh_to_en(
 
     params = json.dumps(params)
     return await translate_file(
-        background_tasks, params, file, credentials, redis_client
+        background_tasks, params, file, current_user, credentials, redis_client
     )
 
 
@@ -408,6 +421,7 @@ async def translate_file_en_to_ja(
     background_tasks: BackgroundTasks,
     params: str = Form(...),
     file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
     credentials: dict = Depends(auth_middleware),
     redis_client: redis.Redis = Depends(get_redis),
 ):
@@ -425,7 +439,7 @@ async def translate_file_en_to_ja(
 
     params = json.dumps(params)
     return await translate_file(
-        background_tasks, params, file, credentials, redis_client
+        background_tasks, params, file, current_user, credentials, redis_client
     )
 
 
@@ -434,6 +448,7 @@ async def translate_file_en_to_zh(
     background_tasks: BackgroundTasks,
     params: str = Form(...),
     file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
     credentials: dict = Depends(auth_middleware),
     redis_client: redis.Redis = Depends(get_redis),
 ):
@@ -451,55 +466,91 @@ async def translate_file_en_to_zh(
 
     params = json.dumps(params)
     return await translate_file(
-        background_tasks, params, file, credentials, redis_client
+        background_tasks, params, file, current_user, credentials, redis_client
     )
 
 
 @router.get("/status", response_model=FileTranslationStatus)
 async def get_translation_status(
     task_id: str,
+    current_user: User = Depends(get_current_user),
     credentials: dict = Depends(auth_middleware),
     redis_client: redis.Redis = Depends(get_redis),
 ):
     logger.debug("credentials: " + str(credentials))
     logger.info("get translation status endpoint called")
 
-    if not await FileTranslationStatus.exists(task_id, redis_client):
+    # Get user_id from credentials
+    user_id = current_user.email
+
+    status_cache = FileTranslationStatusCache(redis_client)
+    if not await status_cache.exists(user_id, task_id):
         logger.error(f"Task ID {task_id} not found")
         raise HTTPException(status_code=404, detail="Task not found")
-    return await FileTranslationStatus.load(task_id, redis_client)
+    return await status_cache.get_status(user_id, task_id)
+
+
+@router.get("/status/all")
+async def get_all_translation_status(
+    current_user: User = Depends(get_current_user),
+    credentials: dict = Depends(auth_middleware),
+    redis_client: redis.Redis = Depends(get_redis),
+):
+    logger.debug("credentials: " + str(credentials))
+    logger.info("get all translation status endpoint called")
+
+    # Get user_id from credentials
+    user_id = current_user.email
+
+    status_cache = FileTranslationStatusCache(redis_client)
+    result = await status_cache.get_all_status(user_id)
+    return result if result else {}
 
 
 @router.get("/download")
 async def download_translated_file(
     task_id: str,
     credentials: dict = Depends(auth_middleware),
-    redis_client: redis.Redis = Depends(get_redis),
+    db: Session = Depends(get_db),
 ):
     logger.debug("credentials: " + str(credentials))
     logger.info("download translated file endpoint called")
 
-    if not await FileTranslationStatus.exists(task_id, redis_client):
-        logger.error(f"Task ID {task_id} not found")
-        raise HTTPException(
-            status_code=404, detail=f"Task not found. Task ID: {task_id}"
-        )
+    # # Get user_id from credentials
+    # user_id = current_user.email
+    #
+    # status_cache = FileTranslationStatusCache(redis_client)
+    # if not await status_cache.exists(user_id, task_id):
+    #     logger.error(f"Task ID {task_id} not found")
+    #     raise HTTPException(
+    #         status_code=404, detail=f"Task not found. Task ID: {task_id}"
+    #     )
+    #
+    # task = await status_cache.get_status(user_id, task_id)
+    # if task.status != Status.COMPLETED:
+    #     logger.error(f"Task ID {task_id} not completed")
+    #     raise HTTPException(
+    #         status_code=400, detail=f"Translation not completed. Task ID: {task_id}"
+    #     )
+    #
+    # if not task.output_file_path or not os.path.exists(task.output_file_path):
+    #     logger.error(f"File not found: {task.output_file_path}")
+    #     raise HTTPException(
+    #         status_code=404, detail=f"File not found: {task.output_file_path}"
+    #     )
 
-    task = await FileTranslationStatus.load(task_id, redis_client)
-    if task.status != Status.COMPLETED:
-        logger.error(f"Task ID {task_id} not completed")
+    # Get translation history by task_id
+    dao = FileTranslationHistoryDao(db)
+    history = await dao.get_by_task_id(task_id)
+    if not history:
+        logger.error(f"Translation history not found for task_id: {task_id}")
         raise HTTPException(
-            status_code=400, detail=f"Translation not completed. Task ID: {task_id}"
-        )
-
-    if not task.output_file_path or not os.path.exists(task.output_file_path):
-        logger.error(f"File not found: {task.output_file_path}")
-        raise HTTPException(
-            status_code=404, detail=f"File not found: {task.output_file_path}"
+            status_code=404,
+            detail=f"Translation history not found for task_id: {task_id}",
         )
 
     return FileResponse(
-        task.output_file_path, filename=os.path.basename(task.output_file_path)
+        history.translated_file_path, filename=history.translated_file_name
     )
 
 
@@ -542,6 +593,36 @@ def process_file_translation(
             os.remove(file_path)
 
 
+async def process_file_translation_stream(
+    status_cache: FileTranslationStatusCache,
+    user_id: str,
+    status: FileTranslationStatus,
+    input_file_path: str,
+    source_language: Language,
+    target_language: Language,
+    keywords_map,
+    **kwargs,
+):
+    # Create file translator
+    file_translator = FileTranslatorBuilder.build_file_translator(
+        input_file_path,
+        source_language,
+        target_language,
+        status=status,
+        keywords_map=keywords_map,
+        kwargs=kwargs,
+    )
+
+    # Set up the output path for the translated file
+    temp_dir = os.getenv("TEMP_PATH", tempfile.gettempdir())
+    output_dir = os.path.join(temp_dir, TRANSLATED_FOLDER)
+    os.makedirs(output_dir, exist_ok=True)
+
+    async for status in file_translator.astream_translate(output_dir):
+        await status_cache.set_status(user_id, status)
+        await asyncio.sleep(0.01)
+
+
 # File translation history response model
 class FileTranslationHistoryResponse(BaseModel):
     id: int
@@ -578,7 +659,7 @@ async def create_file_translation_history(
 
         # Get translation status from cache
         status_cache = FileTranslationStatusCache(redis_client)
-        status = await status_cache.get_status(task_id)
+        status = await status_cache.get_status(user_id, task_id)
 
         if not status:
             raise HTTPException(
