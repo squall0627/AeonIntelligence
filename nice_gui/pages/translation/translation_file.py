@@ -1,7 +1,6 @@
-import json as json_lib
 import os
 
-from nicegui import ui, background_tasks
+from nicegui import ui, background_tasks, events
 from nicegui.events import UploadEventArguments, UiEventArguments
 from typing import Dict
 
@@ -95,17 +94,66 @@ class FileTranslationPage(AIPageBase):
                     {"name": "datetime", "label": "Date Time", "field": "datetime"},
                     {"name": "task", "label": "Task", "field": "task"},
                     {"name": "duration", "label": "Duration", "field": "duration"},
-                    {"name": "source", "label": "Source File", "field": "source"},
+                    {
+                        "name": "source",
+                        "label": "Source File",
+                        "field": "source",
+                        "classes": "cursor-pointer",
+                    },
                     {
                         "name": "translated",
                         "label": "Translated File",
                         "field": "translated",
+                        "classes": "cursor-pointer",
                     },
                     {"name": "status", "label": "Status", "field": "status"},
                 ],
                 rows=[],
                 row_key="datetime",
             ).classes("w-full")
+
+            # Download handler
+            async def download_handler(e: events.GenericEventArguments) -> None:
+                task_id = e.args["source"]["task_id"]
+                filename = e.args["source"]["filename"]
+                await self.download_handler(task_id, filename)
+
+            # Add custom slot for the table body
+            self.file_history_table.add_slot(
+                "body",
+                r"""
+                <q-tr :props="props">
+                    <q-td key="datetime" :props="props">
+                        {{ props.row.datetime }}
+                    </q-td>
+                    <q-td key="task" :props="props">
+                        {{ props.row.task }}
+                    </q-td>
+                    <q-td key="duration" :props="props">
+                        {{ props.row.duration }}
+                    </q-td>
+                    <q-td key="source" :props="props">
+                        <a class="text-blue-500 hover:underline cursor-pointer"
+                           @click="() => $parent.$emit('download_handler', props.row)">
+                            {{ props.row.source.text }}
+                        </a>
+                    </q-td>
+                    <q-td key="translated" :props="props">
+                        <a v-if="props.row.translated.text !== '-'"
+                           class="text-blue-500 hover:underline cursor-pointer"
+                           @click="() => $parent.$emit('download_handler', props.row)">
+                            {{ props.row.translated.text }}
+                        </a>
+                        <span v-else>-</span>
+                    </q-td>
+                    <q-td key="status" :props="props">
+                        {{ props.row.status }}
+                    </q-td>
+                </q-tr>
+                """,
+            )
+
+            self.file_history_table.on("download_handler", download_handler)
 
             # Load history
             background_tasks.create(self.load_translation_history())
@@ -194,7 +242,7 @@ class FileTranslationPage(AIPageBase):
         )
 
         # Update the progress bar
-        self.update_processbar2(status, progress_bar, status_label)
+        self.update_processbar(status, progress_bar, status_label)
 
         # When translation is completed
         if status.get("status") == Status.COMPLETED:
@@ -203,74 +251,6 @@ class FileTranslationPage(AIPageBase):
             await self.create_translation_history(status)
             # Load translation history
             background_tasks.create(self.load_translation_history())
-
-    async def start_file_translation_stream(self, file: Dict, task_id: str):
-        """Start translation process for a single file"""
-        with self.active_translations:
-            # Create a container for this file's translation
-            with ui.card().classes("w-full"):
-                with ui.row().classes("w-full items-center justify-between"):
-                    ui.label(f'File: {file["name"]}').classes("font-bold")
-                    status_label = ui.label("Translating...").classes("text-blue-500")
-
-                # Progress bar
-                progress_bar = ui.linear_progress(
-                    value=0, size="20px", show_value=False
-                ).classes("w-full")
-                with progress_bar:
-                    ui.label().classes(
-                        "absolute-center text-sm text-white"
-                    ).bind_text_from(
-                        progress_bar, "value", lambda x: f"{int(x * 100)}%"
-                    )
-
-                # Download link
-                download_link = ui.link("Download translation").classes("text-blue-500")
-                download_link.set_visibility(False)
-
-                try:
-                    # Call translation API and update progress
-                    result = await self.call_file_translation_api_stream(
-                        task_id=task_id,
-                        file=file,
-                        callback=lambda status: self.update_processbar(
-                            progress_bar, status
-                        ),
-                    )
-
-                    status_label.text = "Completed"
-                    status_label.classes("text-green-500")
-
-                    # Extract filename from the output path
-                    output_filename = os.path.basename(result["output_file_path"])
-
-                    # create download handler
-                    async def download_handler():
-                        try:
-                            # Download the file using api_client
-                            file_content = await self.api_client.get_file(
-                                f"/api/translation/download",
-                                params={"task_id": result["task_id"]},
-                            )
-                            # Use ui.download to trigger browser download
-                            ui.download(file_content, output_filename)
-                        except Exception as e:
-                            ui.notify(f"Download failed: {str(e)}", type="negative")
-
-                    # Download Button
-                    ui.button(text=output_filename, on_click=download_handler).classes(
-                        "text-blue-500"
-                    )
-
-                    # Save translation to history
-                    await self.create_translation_history(result)
-
-                except Exception as e:
-                    status_label.text = f"Translation failed: {str(e)}"
-                    status_label.classes("text-red-500")
-
-        # Load translation history
-        background_tasks.create(self.load_translation_history())
 
     async def call_file_translation_api(
         self,
@@ -290,32 +270,6 @@ class FileTranslationPage(AIPageBase):
             )
 
             return result["task_id"]
-
-        except Exception as e:
-            raise Exception(f"Translation API error: {str(e)}")
-
-    async def call_file_translation_api_stream(
-        self,
-        task_id: str,
-        file: Dict,
-        callback,
-    ):
-        """Call the file translation API with authentication"""
-        try:
-            # Prepare file data
-            files = {"file": (file["name"], file["content"])}
-            # TODO
-            json = {
-                "kwargs": {"run_parallely": False, "target_pages": [1]},
-            }
-            final_status = None
-            async for status in self.api_client.post_streaming(
-                f"/api/translation/file/{task_id}", json=json, files=files
-            ):
-                final_status = json_lib.loads(status)
-                callback(final_status)
-
-            return final_status
 
         except Exception as e:
             raise Exception(f"Translation API error: {str(e)}")
@@ -347,12 +301,7 @@ class FileTranslationPage(AIPageBase):
         except Exception as e:
             ui.notify("File rejection error", type="negative")
 
-    def update_processbar(self, processbar, status):
-        """Update process bar with percentage display"""
-        progress = status.get("progress", 0.0)
-        processbar.set_value(progress)
-
-    def update_processbar2(self, status, processbar, status_label):
+    def update_processbar(self, status, processbar, status_label):
         """Update process bar with percentage display"""
         progress = status.get("progress", 0.0)
         processbar.set_value(progress)
@@ -368,16 +317,7 @@ class FileTranslationPage(AIPageBase):
 
             # create download handler
             async def download_handler():
-                try:
-                    # Download the file using api_client
-                    file_content = await self.api_client.get_file(
-                        f"/api/translation/download",
-                        params={"task_id": status["task_id"]},
-                    )
-                    # Use ui.download to trigger browser download
-                    ui.download(file_content, output_filename)
-                except Exception as e:
-                    ui.notify(f"Download failed: {str(e)}", type="negative")
+                await self.download_handler(status["task_id"], output_filename)
 
             # Download Button
             ui.button(text=output_filename, on_click=download_handler).classes(
@@ -416,8 +356,16 @@ class FileTranslationPage(AIPageBase):
                         "datetime": history["date_time"],
                         "task": history["task_name"],
                         "duration": f"{history['duration']:.1f}s",
-                        "source": history["source_file_name"],
-                        "translated": history["translated_file_name"] or "-",
+                        "source": {
+                            "text": history["source_file_name"],
+                            "task_id": history["task_id"],
+                            "filename": history["source_file_name"],
+                        },
+                        "translated": {
+                            "text": history["translated_file_name"] or "-",
+                            "task_id": history["task_id"],
+                            "filename": history["translated_file_name"] or "",
+                        },
                         "status": history["status"],
                     }
                 )
@@ -429,6 +377,19 @@ class FileTranslationPage(AIPageBase):
         except Exception as e:
             ui.notify(f"Failed to load history: {str(e)}", type="negative")
             raise Exception(f"Get file translation history API error: {str(e)}")
+
+    async def download_handler(self, task_id: str, filename: str) -> None:
+        """Download file handler"""
+        try:
+            # Download the file using api_client
+            file_content = await self.api_client.get_file(
+                f"/api/translation/download", params={"task_id": task_id}
+            )
+            # Use ui.download to trigger browser download
+            ui.download(file_content, filename)
+            ui.notify(f"{filename} Downloaded successfully!", type="positive")
+        except Exception as e:
+            ui.notify(f"Download failed: {str(e)}", type="negative")
 
     async def recover_translating_tasks(self):
         """Get translating tasks and recover the progress bar"""
